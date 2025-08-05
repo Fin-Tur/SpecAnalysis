@@ -13,14 +13,16 @@ public class SpeReader extends Reader{
 
     @Override
     public Spectrum readSpectrum(String src) throws IOException {
-        File file = new File(src);
 
+        //OPen file
+        File file = new File(src);
+        //read..
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
             boolean inData = false;
             boolean inCal = false;
             int dataStart = -1, dataEnd = -1;
-            List<Integer> counts = new ArrayList<>();
+            List<Double> counts = new ArrayList<>();
             double[] calibration = null;
 
             while ((line = br.readLine()) != null) {
@@ -38,17 +40,19 @@ public class SpeReader extends Reader{
                 //Look for$MCA_CAL (energy Calibration)
                 if (line.startsWith("$MCA_CAL:")) {
                     inCal = true;
-                    //get calibrations
+                    //get arg len
                     String calLine = br.readLine();
                     if (calLine == null) break;
                     calLine = calLine.trim();
+                    int argLen = Integer.parseInt(calLine);
+                    //Read args
                     String[] parts = calLine.split("\\s+");
-                    if (parts.length == 1) {
-                        //Args in next line ->
-                        calLine = br.readLine().trim();
-                        parts = calLine.split("\\s+");
-                    }
-                    calibration = new double[parts.length];
+                    calLine = br.readLine().trim();
+                    parts = calLine.split("\\s+");
+
+                    assert argLen == parts.length;
+                    calibration = new double[argLen];
+
                     for (int i = 0; i < parts.length; i++) {
                         calibration[i] = Double.parseDouble(parts[i].replace("E", "e"));
                     }
@@ -56,23 +60,26 @@ public class SpeReader extends Reader{
                     continue;
                 }
 
-                // Lese Zähldaten bis Abschnitt Ende oder bis Zeile mit "$"
+                //Read data
                 if (inData) {
+                    //BReakout statement
                     if (line.startsWith("$")) {
                         inData = false;
                         continue;
                     }
                     if (!line.isEmpty()) {
-                        counts.add(Integer.parseInt(line));
+                        counts.add(Double.parseDouble(line));
                     }
                 }
             }
 
 
-            int[] countsArr = counts.stream().mapToInt(Integer::intValue).toArray();
+            double[] countsArr = counts.stream().mapToDouble(Double::doubleValue).toArray();
+            assert calibration != null;
+            assert calibration.length == 3;
+            return new Spectrum(countsArr, calibration[0], calibration[1], calibration[2]);
         }
 
-        return null;
     }
 
 }
