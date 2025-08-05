@@ -2,52 +2,77 @@ package de.aint.readers;
 
 import de.aint.models.Spectrum;
 
+import java.io.BufferedReader;
 import java.io.File;
-import java.util.Scanner;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SpeReader extends Reader{
 
     @Override
-    public Spectrum readSpectrum(String src){
-        //Initialize Scanner
-        Scanner scan = null;
-        try {
-            scan = new Scanner(new File(src));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        //Skip to %DATA
-        String curr = "";
-        while(!curr.equals("%DATA:")){
-            curr = scan.nextLine();
-        }
+    public Spectrum readSpectrum(String src) throws IOException {
+        File file = new File(src);
 
-        //Gather data
-        curr = scan.nextLine();
-        curr = curr.strip();
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String line;
+            boolean inData = false;
+            boolean inCal = false;
+            int dataStart = -1, dataEnd = -1;
+            List<Integer> counts = new ArrayList<>();
+            double[] calibration = null;
 
-        int channel_count = 0;
+            while ((line = br.readLine()) != null) {
+                line = line.trim();
 
-        try{
-            channel_count = Integer.parseInt(curr);
-        }catch(NumberFormatException ne){
-            throw new RuntimeException(ne);
-        }
+                //Look for $DATA seq
+                if (line.startsWith("$DATA:")) {
+                    inData = true;
+                    //get length
+                    String[] range = br.readLine().trim().split("\\s+");
+                    dataStart = Integer.parseInt(range[0]);
+                    dataEnd = Integer.parseInt(range[1]);
+                    continue;
+                }
+                //Look for$MCA_CAL (energy Calibration)
+                if (line.startsWith("$MCA_CAL:")) {
+                    inCal = true;
+                    //get calibrations
+                    String calLine = br.readLine();
+                    if (calLine == null) break;
+                    calLine = calLine.trim();
+                    String[] parts = calLine.split("\\s+");
+                    if (parts.length == 1) {
+                        //Args in next line ->
+                        calLine = br.readLine().trim();
+                        parts = calLine.split("\\s+");
+                    }
+                    calibration = new double[parts.length];
+                    for (int i = 0; i < parts.length; i++) {
+                        calibration[i] = Double.parseDouble(parts[i].replace("E", "e"));
+                    }
+                    inCal = false;
+                    continue;
+                }
 
-        var counts = new int[channel_count];
-
-        for(int i = 0; i < channel_count; i++){
-            curr = scan.nextLine().strip();
-            try {
-                int count = Integer.parseInt(curr);
-                counts[i] = count;
-            } catch (NumberFormatException e) {
-                throw new RuntimeException(e);
+                // Lese Zähldaten bis Abschnitt Ende oder bis Zeile mit "$"
+                if (inData) {
+                    if (line.startsWith("$")) {
+                        inData = false;
+                        continue;
+                    }
+                    if (!line.isEmpty()) {
+                        counts.add(Integer.parseInt(line));
+                    }
+                }
             }
+
+
+            int[] countsArr = counts.stream().mapToInt(Integer::intValue).toArray();
         }
 
-        return new Spectrum(counts);
-
+        return null;
     }
 
 }
