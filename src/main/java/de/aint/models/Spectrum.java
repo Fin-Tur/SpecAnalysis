@@ -67,4 +67,8 @@ public class Spectrum {
     public double[] getEnergy_per_channel() {
         return energy_per_channel;
     }
+
+    public int getChannel_count(){
+        return this.counts.length;
+    }
 }
