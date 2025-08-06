@@ -4,9 +4,6 @@ package de.aint;
 import de.aint.models.Spectrum;
 import de.aint.operations.AddOperator;
 import de.aint.readers.Reader;
-import de.aint.readers.SpeReader;
-
-import java.io.IOException;
 
 public class Main {
     public static void main(String[] args){

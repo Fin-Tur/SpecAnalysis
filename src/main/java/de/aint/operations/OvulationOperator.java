@@ -6,8 +6,28 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.DecompositionSolver;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
+import java.util.Arrays;
 
 public class OvulationOperator {
+
+        private static boolean exceedsStandartDerivation(double[] counts, float threshold) {
+        //calculate mean and standard deviation
+        double mean = 0;
+        for(double count : counts) mean += count;
+        mean /= counts.length;
+
+        double variance = 0;
+        for(double count : counts) variance += Math.pow(count - mean, 2);
+        variance /= counts.length;
+        double stdDev = Math.sqrt(variance);
+        //check if any count exceeds mean + threshold * stdDev
+        if(stdDev == 0) return false; //no variation, no outliers
+        for(double count : counts){
+            if(Math.abs(count - mean) > threshold * stdDev) return true;
+        }
+
+        return false;
+    }
 
     //Savitzky-Golay
     //Default window_size = 7, polynomial_degree = 2
@@ -52,7 +72,7 @@ public class OvulationOperator {
     }
 
 
-    public static Spectrum smoothSpectrum(Spectrum spec, int window_size, int polynomial_degree){
+    public static Spectrum smoothSpectrum(Spectrum spec, int window_size, int polynomial_degree, boolean eraseOutliers){
         //Window size has to be odd to ensure symetry
         if(window_size % 2 == 0){
             return null;
@@ -65,6 +85,13 @@ public class OvulationOperator {
         //Smooth spectrum
         for(int i = half_window; i<spec.getChannel_count()-half_window; i++){
             double count = 0;
+            //Check for false peaks
+            if(eraseOutliers && exceedsStandartDerivation(Arrays.copyOfRange(counts, i-half_window, i+half_window+1), 3f)){
+                smoothed_counts[i] = counts[i];
+                continue;
+            }
+            double[] window = new double[window_size];
+            window = Arrays.copyOfRange(counts, i-half_window, i+half_window+1);
             for(int j = -half_window; j<=half_window; j++){
                 count += counts[i+j] * weight[j+half_window];
             }
@@ -75,5 +102,7 @@ public class OvulationOperator {
         return new Spectrum(spec.getEnergy_per_channel(), smoothed_counts);
 
     }
+
+
 
 }

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Counts Plot</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h1>Counts Plot</h1>
+    <label for="endpoint-select">Datenquelle wählen:</label>
+    <select id="endpoint-select">
+        <option value="/">Original</option>
+        <option value="/smoothed">Geglättet</option>
+        <option value="/addition">Addition</option>
+    </select>
+    <div id="plot" style="width:90%;height:600px;"></div>
+
+    <script>
+        const select = document.getElementById('endpoint-select');
+
+        function fetchAndPlot(endpoint) {
+            fetch('http://localhost:7000' + endpoint)
+                .then(response => response.json())
+                .then(data => {
+                    const counts = data.counts;
+                    if (!counts || !Array.isArray(counts)) {
+                        console.error("Keine gültigen counts-Daten!");
+                        return;
+                    }
+
+                    const xValues = counts.map((_, index) => index);
+
+                    const trace = {
+                        x: xValues,
+                        y: counts,
+                        type: 'scatter',
+                        mode: 'lines',
+                        name: 'Counts',
+                    };
+
+                    const layout = {
+                        title: 'Counts Plot (' + select.options[select.selectedIndex].text + ')',
+                        xaxis: { title: 'Index' },
+                        yaxis: { 
+                            title: 'Wert',
+                            type: 'log'
+                        }
+                    };
+
+                    Plotly.newPlot('plot', [trace], layout);
+                })
+                .catch(error => console.error('Fehler beim Laden:', error));
+        }
+
+        // Initialer Plot
+        fetchAndPlot(select.value);
+
+        // Bei Auswahländerung neu laden
+        select.addEventListener('change', () => {
+            fetchAndPlot(select.value);
+        });
+    </script>
+</body>
+</html>

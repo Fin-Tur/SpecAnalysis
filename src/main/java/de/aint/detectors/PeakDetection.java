@@ -7,7 +7,7 @@ public class PeakDetection {
 
     public ROI[] detectPeaks(Spectrum spec){
 
-        
+
 
         return null;
     }
