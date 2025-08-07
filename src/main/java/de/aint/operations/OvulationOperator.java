@@ -76,30 +76,43 @@ public class OvulationOperator {
     }
 
 
-    public static Spectrum smoothSpectrum(Spectrum spec, int window_size, int polynomial_degree, boolean eraseOutliers){
+    public static Spectrum smoothSpectrum(Spectrum spec, int window_size, int polynomial_degree, boolean eraseOutliers, int iter){
         //Window size has to be odd to ensure symetry
         if(window_size % 2 == 0){
             window_size++;
         }
-        int half_window = (window_size-1)/2;
-        //Declare variables
-        double[] weight = savitzkyGolay(window_size, polynomial_degree);
+        //Declare some variables
         double[] smoothed_counts = new double[spec.getChannel_count()];
         double[] counts = spec.getCounts();
-        //Smooth spectrum
-        for(int i = half_window; i<spec.getChannel_count()-half_window; i++){
-            double count = 0;
-            //Check for false peaks
-            if(eraseOutliers && exceedsStandartDerivation(Arrays.copyOfRange(counts, i-half_window, i+half_window+1), 3f)){
-                smoothed_counts[i] = counts[i];
-                continue;
+        int half_window = (window_size-1)/2;
+        //Iterations begin
+        for(int iters = 0; iters < iter; iters++){
+            //If window size is too small, return original spectrum
+            if(window_size < 3) {
+                return new Spectrum(spec.getEnergy_per_channel(), smoothed_counts);
             }
-            double[] window = new double[window_size];
-            window = Arrays.copyOfRange(counts, i-half_window, i+half_window+1);
-            for(int j = -half_window; j<=half_window; j++){
-                count += counts[i+j] * weight[j+half_window];
+            //Declare variables
+
+            double[] weight = savitzkyGolay(window_size, polynomial_degree);
+            //Smooth spectrum
+            for(int i = half_window; i<spec.getChannel_count()-half_window; i++){
+                double count = 0;
+                //Check for false peaks
+                if(eraseOutliers && exceedsStandartDerivation(Arrays.copyOfRange(counts, i-half_window, i+half_window+1), 3f)){
+                    smoothed_counts[i] = counts[i];
+                    continue;
+                }
+                double[] window = new double[window_size];
+                window = Arrays.copyOfRange(counts, i-half_window, i+half_window+1);
+                for(int j = -half_window; j<=half_window; j++){
+                    count += counts[i+j] * weight[j+half_window];
+                }
+                smoothed_counts[i] = count;
             }
-            smoothed_counts[i] = count;
+
+            //Lessen Winow size to avoid overshooting
+            window_size -= 2;
+            half_window = (window_size-1)/2;
         }
 
 
