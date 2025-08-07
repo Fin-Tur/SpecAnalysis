@@ -3,9 +3,14 @@ package de.aint.operations;
 
 import de.aint.models.Spectrum;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.CholeskyDecomposition;
 import org.apache.commons.math3.linear.DecompositionSolver;
 import org.apache.commons.math3.linear.LUDecomposition;
+import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.RealVector;
+
 import java.util.Arrays;
 
 public class OvulationOperator {
@@ -50,7 +55,7 @@ public class OvulationOperator {
         //ATA = A^T * A
         RealMatrix ATA = A.transpose().multiply(A);
 
-        //Inverse von ATA
+        //Inverse of ATA
         DecompositionSolver solver = new LUDecomposition(ATA).getSolver();
         RealMatrix ATAinv = solver.getInverse();
 
@@ -59,7 +64,6 @@ public class OvulationOperator {
 
         //First row of b are weights for  a0 (x=0)
         double[] weights = B.getRow(0);
-
 
         //Normalize weight, so weights[] = 1
         double sum = 0.0;
@@ -75,7 +79,7 @@ public class OvulationOperator {
     public static Spectrum smoothSpectrum(Spectrum spec, int window_size, int polynomial_degree, boolean eraseOutliers){
         //Window size has to be odd to ensure symetry
         if(window_size % 2 == 0){
-            return null;
+            window_size++;
         }
         int half_window = (window_size-1)/2;
         //Declare variables
@@ -102,7 +106,152 @@ public class OvulationOperator {
         return new Spectrum(spec.getEnergy_per_channel(), smoothed_counts);
 
     }
+    //Func to create second derivative matrix for background estimation / curvature of spectrum
+    private static RealMatrix createSecondDerivativeMatrix(int n) {
+        int rows = n - 2;
+        RealMatrix D = new Array2DRowRealMatrix(rows, n);
+
+        for (int i = 0; i < rows; i++) {
+            D.setEntry(i, i, 1.0);
+            D.setEntry(i, i + 1, -2.0);
+            D.setEntry(i, i + 2, 1.0);
+        }
+        return D;
+    }
+
+    //Func to build curvature penalty matrix for background estimation, outsorced to save ram
+    private static RealMatrix buildCurvaturePenalty(int n, double lambda) {
+    RealMatrix penalty = new Array2DRowRealMatrix(n, n);
+
+    for (int i = 0; i < n; i++) {
+        penalty.addToEntry(i, i, 6.0 * lambda);  //Main diagonal
+        if (i > 0) penalty.addToEntry(i, i - 1, -4.0 * lambda); //diagonal left
+        if (i < n - 1) penalty.addToEntry(i, i + 1, -4.0 * lambda); //diagonal right
+        if (i > 1) penalty.addToEntry(i, i - 2, 1.0 * lambda);  //second left
+        if (i < n - 2) penalty.addToEntry(i, i + 2, 1.0 * lambda);  //second right
+    }
+
+    return penalty;
+}
 
 
+    //arPLS Baseline correction using asymmetrically reweighted penalized least squares smoothing
+    public static double[] estimateBackgroundUsingARPLS(Spectrum spec, double lambda, double epsilon, int maxIterations) {
+        double[] counts = spec.getCounts();
+        int cntLen = counts.length;
+        //Create count vector for matrix multiplication
+        RealVector CountsVec = new ArrayRealVector(counts);
+        //Create second derivative matrix for curvature estimation
+        RealMatrix SecondDerivat = createSecondDerivativeMatrix(cntLen);
+        //penalty term for curvature
+        RealMatrix CurvaturePenalty = buildCurvaturePenalty(cntLen, lambda);
+        //Initialize weights w/1 since no peaks r known
+        double[] weights = new double[cntLen];
+        for (int i = 0; i < cntLen; i++) weights[i] = 1.0;
+        //initialize estimated Background
+        RealVector background = new ArrayRealVector(cntLen);
+
+        //Iterate until convergence or max iterations reached
+        for (int iter = 0; iter < maxIterations; iter++) {
+            //Diagonal matrix W with weights // peaks are weighted less
+            RealMatrix W = MatrixUtils.createRealDiagonalMatrix(weights);
+            //Create the system of equations : aims to balance penalty minimization and fit to data
+            RealMatrix A = W.add(CurvaturePenalty);
+            //Takes forever!!!! ~2min each iteration :(
+            DecompositionSolver solver = new CholeskyDecomposition(A).getSolver();
+            RealVector Wy = CountsVec.ebeMultiply(new ArrayRealVector(weights));
+            //Estimates new background
+            background = solver.solve(Wy);
+            //Calculate new weights based on the difference between estimated background and counts
+            //d = CountsVec - background so, where is spectrum above background, d is positive
+            RealVector d = CountsVec.subtract(background);
+            double[] differenceCountsToBackground = d.toArray();
+            //Calculate weights based on the difference
+            //initialize mean and std for negative values
+            double meanNeg = 0.0;
+            double stdNeg = 0.0;
+            int countNeg = 0;
+            //Only consider negative values for std and mean // weights are calculated based on the negative values since peaks are ignored
+            for (double v : differenceCountsToBackground) {
+                if (v < 0) {
+                    meanNeg += v;
+                    countNeg++;
+                }
+            }
+            //Calculate sum of all negative values
+            if (countNeg > 0) {
+                meanNeg /= countNeg;
+                //Calculate standard deviation of negative values
+                for (double v : differenceCountsToBackground) {
+                    if (v < 0) {
+                        stdNeg += Math.pow(v - meanNeg, 2);
+                    }
+                }
+                stdNeg = Math.sqrt(stdNeg / countNeg);
+            }
+            //Initialize new weughts
+            double[] newWeights = new double[cntLen];
+            for (int i = 0; i < cntLen; i++) {
+                //If the difference is negative it means the count is below the background, so we increase the weight
+                //oppsoite for positive values
+                newWeights[i] = 1.0 / (1.0 + Math.exp(2.0 * (differenceCountsToBackground[i] - (2 * stdNeg - meanNeg)) / stdNeg));
+            }
+            //Check breakoff term : if values of weights do not change significantly, we can stop iterating
+            double diff = 0.0;
+            for (int i = 0; i < cntLen; i++) {
+                diff += Math.abs(weights[i] - newWeights[i]);
+            }
+            diff /= cntLen;
+            if (diff < epsilon) break;
+            weights = newWeights;
+        }
+
+        return background.toArray();
+    }
+
+
+    public static double[] estimateBackgroundUsingALS(Spectrum spec, double lambda, double p, int maxIterations) {
+        //initialize variables
+        double[] counts = spec.getCounts();
+        int cntLen = counts.length;
+        double[] background = new double[cntLen];
+
+        //initialize weights
+        double[] weights = new double[cntLen];
+        Arrays.fill(weights, 1.0);
+        //Build curvature penalty matrix
+        RealMatrix curvaturePenalty = buildCurvaturePenalty(cntLen, lambda);
+
+        for(int iter = 0; iter < maxIterations; iter++) {
+            //Create diagonal matrix W with weights
+            RealMatrix Weights = MatrixUtils.createRealDiagonalMatrix(weights);
+            // A = Weights + curvature penalty
+            RealMatrix A = Weights.add(curvaturePenalty);
+            //Calculate counts * weight
+            double[] weighted_counts = new double[cntLen];
+            for (int i = 0; i < cntLen; i++){ 
+                weighted_counts[i] = weights[i] * counts[i];
+                
+            }
+            RealVector weighted_counts_Vec = new ArrayRealVector(weighted_counts);
+            //Solve the system of equations cholesky cuz A is symmetric and positive for sure
+            DecompositionSolver solver = new CholeskyDecomposition(A).getSolver();
+            RealVector background_Vec = solver.solve(weighted_counts_Vec);
+            background = background_Vec.toArray();
+            //Calculate new weights based on the difference between estimated background and counts
+            //Break if weights do not change significantly
+            double delta = 0.0;
+            double[] newWeights = new double[cntLen];
+            for (int i = 0; i < cntLen; i++) {
+                newWeights[i] = counts[i] > background[i] ? p : 1.0 - p; //Above background -> weight low and opposite -> "ignore peak"
+                delta += Math.abs(newWeights[i] - weights[i]);
+            }
+            weights = newWeights;
+            if (delta < 1e-6) break;
+
+        }
+
+        return background;
+    }
 
 }
