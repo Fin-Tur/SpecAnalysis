@@ -4,6 +4,9 @@ import java.util.*;
 import java.util.stream.IntStream;
 
 public class Spectrum {
+    
+    //Peak width increasement given by shape_cal(keV) // x^0, x^1, x^2
+    static final double[] shape_cal = {5.9735E-04, 7.6079E-04, 0.7479};
 
     //Counts in channels oa Counts per channel(energy range)
     private final double[] counts;

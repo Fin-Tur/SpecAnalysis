@@ -21,7 +21,8 @@
         }
         h1 {
             text-align: center;
-            color: #22223b;
+            color: #ffffff;
+            text-shadow: #3f3f41 2px 2px 4px;
             margin-bottom: 24px;
             letter-spacing: 1px;
         }
@@ -62,8 +63,8 @@
             cursor: pointer;
         }
         .spectrum-checkbox:checked {
-            border: 2px solid #457b9d;
-            background: #457b9d;
+            border: 2px solid #45909d;
+            background: #3d94ca;
         }
         .spectrum-checkbox:checked::after {
             content: '';
@@ -146,8 +147,12 @@
             <label class="checkbox-label">
                 <input type="checkbox" class="spectrum-checkbox" value="/background" checked>
                 Background
-                <input type="number" class="iteration-input" data-endpoint="/background" value="2" min="1" max="100" step="1">
+                <select class="background-source" data-endpoint="/background" style="margin-left:10px; height:22px; border-radius:8px; border:1.5px solid #bfc0c0; background:#f0efeb; font-size:0.85em; color:#22223b;">
+                    <option value="original">Original</option>
+                    <option value="smoothed">Smoothed</option>
+                </select>
             </label>
+
         </div>
         <div id="plot" style="width:100%;height:600px;"></div>
     </div>
@@ -155,14 +160,16 @@
         const spectrumOptions = [
             { endpoint: "/", name: "Original", color: "#e63946" },
             { endpoint: "/smoothed", name: "Geglättet", color: "#457b9d", hasIterations: true },
-            { endpoint: "/background", name: "Hintergrund", color: "#2a9d8f", hasIterations: true }
+            { endpoint: "/background", name: "Hintergrund", color: "#2a9d8f", hasIterations: true },
+            { endpoint: "/smbackground", name: "SM Hintergrund", color: "#f1faee", hasIterations: false }
         ];
 
-        function fetchSpectrum(endpoint, iterations, windowSize) {
+        function fetchSpectrum(endpoint, iterations, windowSize, backgroundSource) {
             let url = 'http://localhost:7000' + endpoint;
             const params = [];
             if (iterations) params.push('iterations=' + iterations);
             if (windowSize) params.push('window_size=' + windowSize);
+            if (backgroundSource) params.push('source=' + backgroundSource);
             if (params.length > 0) url += '?' + params.join('&');
             return fetch(url)
                 .then(response => response.json())
@@ -179,6 +186,7 @@
                     .map(opt => {
                         let iterations = null;
                         let windowSize = null;
+                        let backgroundSource = null;
                         if (opt.hasIterations) {
                             const input = document.querySelector(`.iteration-input[data-endpoint="${opt.endpoint}"]`);
                             iterations = input ? input.value : null;
@@ -187,7 +195,11 @@
                             const winInput = document.querySelector(`.window-input[data-endpoint="/smoothed"]`);
                             windowSize = winInput ? winInput.value : null;
                         }
-                        return fetchSpectrum(opt.endpoint, iterations, windowSize).then(data => ({
+                        if (opt.endpoint === "/background") {
+                            const bgSource = document.querySelector('.background-source[data-endpoint="/background"]');
+                            backgroundSource = bgSource ? bgSource.value : null;
+                        }
+                        return fetchSpectrum(opt.endpoint, iterations, windowSize, backgroundSource).then(data => ({
                             ...opt,
                             data
                         }));
@@ -201,8 +213,9 @@
                         type: 'scatter',
                         mode: 'lines',
                         name: r.name +
-                            (r.hasIterations ? ` (Iterationen: ${document.querySelector(`.iteration-input[data-endpoint="${r.endpoint}"]`).value})` : '') +
-                            (r.endpoint === "/smoothed" ? `, Window: ${document.querySelector('.window-input[data-endpoint="/smoothed"]').value}` : ''),
+                            (r.hasIterations ? ` (Iterationen: ${document.querySelector(`.iteration-input[data-endpoint="${r.endpoint}"]`)?.value || ''})` : '') +
+                            (r.endpoint === "/smoothed" ? `, Window: ${document.querySelector('.window-input[data-endpoint="/smoothed"]').value}` : '') +
+                            (r.endpoint === "/background" ? ` (${document.querySelector('.background-source[data-endpoint="/background"]').selectedOptions[0].text})` : ''),
                         line: { color: r.color, width: 3 }
                     }));
 
@@ -235,6 +248,9 @@
         });
         document.querySelectorAll('.window-input').forEach(input => {
             input.addEventListener('input', plotSelectedSpectra);
+        });
+        document.querySelectorAll('.background-source').forEach(input => {
+            input.addEventListener('change', plotSelectedSpectra);
         });
     </script>
 </body>

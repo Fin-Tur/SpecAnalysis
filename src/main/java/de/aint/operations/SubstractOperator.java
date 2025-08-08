@@ -3,7 +3,6 @@ package de.aint.operations;
 import de.aint.models.Spectrum;
 
 import java.util.Arrays;
-import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
 public class SubstractOperator {
