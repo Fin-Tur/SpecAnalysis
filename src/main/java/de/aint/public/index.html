@@ -4,254 +4,49 @@
     <meta charset="UTF-8">
     <title>Counts Plot</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <style>
-        body {
-            background: #f5f6f7;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-        .container {
-            max-width: 1100px;
-            margin: 40px auto;
-            background: #e7e5e5;
-            border-radius: 16px;
-            box-shadow: 0 20px 32px rgba(0,0,0,0.08);
-            padding: 32px 40px 40px 40px;
-        }
-        h1 {
-            text-align: center;
-            color: #ffffff;
-            text-shadow: #3f3f41 2px 2px 4px;
-            margin-bottom: 24px;
-            letter-spacing: 1px;
-        }
-        .checkbox-group {
-            display: flex;
-            justify-content: center;
-            gap: 24px;
-            margin-bottom: 24px;
-        }
-        .checkbox-label {
-            display: flex;
-            align-items: center;
-            font-size: 1.1em;
-            color: #4a4e69;
-            cursor: pointer;
-            user-select: none;
-            gap: 8px;
-            background: #f0efeb;
-            border-radius: 10px;
-            padding: 6px 14px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-            transition: background 0.2s;
-        }
-        .checkbox-label:hover {
-            background: #e0e1dd;
-        }
-        /* Runde Checkboxen */
-        .spectrum-checkbox {
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #bfc0c0;
-            border-radius: 50%;
-            background: #fff;
-            margin-right: 8px;
-            position: relative;
-            transition: border 0.2s;
-            cursor: pointer;
-        }
-        .spectrum-checkbox:checked {
-            border: 2px solid #45909d;
-            background: #3d94ca;
-        }
-        .spectrum-checkbox:checked::after {
-            content: '';
-            display: block;
-            width: 10px;
-            height: 10px;
-            background: #fff;
-            border-radius: 50%;
-            position: absolute;
-            top: 3px;
-            left: 3px;
-        }
-        #plot {
-            margin-top: 32px;
-            background: #f8f9fa;
-            border-radius: 12px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
-        }
-        .iteration-input {
-            width: 40px;
-            height: 22px;
-            padding: 2px 6px;
-            border: 1.5px solid #bfc0c0;
-            border-radius: 8px;
-            background: #f0efeb;
-            font-size: 0.85em;
-            color: #22223b;
-            margin-left: 10px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-            transition: border 0.2s, box-shadow 0.2s;
-        }
-        .iteration-input:focus {
-            border: 1.5px solid #457b9d;
-            outline: none;
-            box-shadow: 0 2px 8px rgba(69,123,157,0.10);
-        }
-        .window-input {
-            width: 50px;
-            height: 22px;
-            padding: 2px 6px;
-            border: 1.5px solid #bfc0c0;
-            border-radius: 8px;
-            background: #f0efeb;
-            font-size: 0.85em;
-            color: #22223b;
-            margin-left: 10px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-            transition: border 0.2s, box-shadow 0.2s;
-        }
-        .window-input:focus {
-            border: 1.5px solid #457b9d;
-            outline: none;
-            box-shadow: 0 2px 8px rgba(69,123,157,0.10);
-        }
-        @media (max-width: 700px) {
-            .container {
-                padding: 16px 4vw;
-            }
-            .checkbox-group {
-                flex-direction: column;
-                gap: 12px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>Counts Plot</h1>
-        <div class="checkbox-group">
-            <label class="checkbox-label">
-                <input type="checkbox" class="spectrum-checkbox" value="/" checked>
-                Original
-            </label>
-            <label class="checkbox-label">
-                <input type="checkbox" class="spectrum-checkbox" value="/smoothed" checked>
-                Smoothed
-                <input type="number" class="iteration-input" data-endpoint="/smoothed" value="5" min="1" max="100" step="1" style="width:40px;" title="Iterations">
-                <input type="number" class="window-input" data-endpoint="/smoothed" value="11" min="3" max="101" step="2" title="Window Size">
-            </label>
-            <label class="checkbox-label">
-                <input type="checkbox" class="spectrum-checkbox" value="/background" checked>
-                Background
-                <select class="background-source" data-endpoint="/background" style="margin-left:10px; height:22px; border-radius:8px; border:1.5px solid #bfc0c0; background:#f0efeb; font-size:0.85em; color:#22223b;">
-                    <option value="original">Original</option>
-                    <option value="smoothed">Smoothed</option>
-                </select>
-            </label>
 
+        <h1>Spectral-Analysis</h1>
+
+        <select class="page-select" id="pageSelect" style="margin-bottom: 20px; padding: 8px; border-radius: 8px; border: 1.5px solid #bfc0c0; background:#f0efeb; font-size:1em; color:#22223b;">
+            <option value="plot">Plot</option>
+            <option value="isotopes">Isotopes</option>
+        </select>
+
+        <div id="plotPage">
+            <div class="checkbox-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" class="spectrum-checkbox" value="/" checked>
+                    Original
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" class="spectrum-checkbox" value="/smoothed" checked>
+                    Smoothed
+                    <input type="number" class="iteration-input" data-endpoint="/smoothed" value="5" min="1" max="100" step="1" style="width:40px;" title="Iterations">
+                    <input type="number" class="window-input" data-endpoint="/smoothed" value="11" min="3" max="101" step="2" title="Window Size">
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" class="spectrum-checkbox" value="/background" checked>
+                    Background
+                    <select class="background-source" data-endpoint="/background" style="margin-left:10px; height:22px; border-radius:8px; border:1.5px solid #bfc0c0; background:#f0efeb; font-size:0.85em; color:#22223b;">
+                        <option value="original">Original</option>
+                        <option value="smoothed">Smoothed</option>
+                    </select>
+                </label>
+
+            </div>
+            <div id="plot" style="width:100%;height:600px;"></div>
         </div>
-        <div id="plot" style="width:100%;height:600px;"></div>
+
+        <div id="isotopePage" style="display:none;">
+            <h2>Isotope-Information</h2>
+            <input type="text" id="elementSearch" placeholder="Element-Symbol (e.g. H, He, Li)" autocomplete="off" class="element-search">
+            <div id="isotopeInfo">Loading Isotopes...</div>
+        </div>
     </div>
-    <script>
-        const spectrumOptions = [
-            { endpoint: "/", name: "Original", color: "#e63946" },
-            { endpoint: "/smoothed", name: "Geglättet", color: "#457b9d", hasIterations: true },
-            { endpoint: "/background", name: "Hintergrund", color: "#2a9d8f", hasIterations: true },
-            { endpoint: "/smbackground", name: "SM Hintergrund", color: "#f1faee", hasIterations: false }
-        ];
-
-        function fetchSpectrum(endpoint, iterations, windowSize, backgroundSource) {
-            let url = 'http://localhost:7000' + endpoint;
-            const params = [];
-            if (iterations) params.push('iterations=' + iterations);
-            if (windowSize) params.push('window_size=' + windowSize);
-            if (backgroundSource) params.push('source=' + backgroundSource);
-            if (params.length > 0) url += '?' + params.join('&');
-            return fetch(url)
-                .then(response => response.json())
-                .catch(() => null);
-        }
-
-        function plotSelectedSpectra() {
-            const checkedBoxes = Array.from(document.querySelectorAll('.spectrum-checkbox:checked'));
-            const selectedEndpoints = checkedBoxes.map(cb => cb.value);
-
-            Promise.all(
-                spectrumOptions
-                    .filter(opt => selectedEndpoints.includes(opt.endpoint))
-                    .map(opt => {
-                        let iterations = null;
-                        let windowSize = null;
-                        let backgroundSource = null;
-                        if (opt.hasIterations) {
-                            const input = document.querySelector(`.iteration-input[data-endpoint="${opt.endpoint}"]`);
-                            iterations = input ? input.value : null;
-                        }
-                        if (opt.endpoint === "/smoothed") {
-                            const winInput = document.querySelector(`.window-input[data-endpoint="/smoothed"]`);
-                            windowSize = winInput ? winInput.value : null;
-                        }
-                        if (opt.endpoint === "/background") {
-                            const bgSource = document.querySelector('.background-source[data-endpoint="/background"]');
-                            backgroundSource = bgSource ? bgSource.value : null;
-                        }
-                        return fetchSpectrum(opt.endpoint, iterations, windowSize, backgroundSource).then(data => ({
-                            ...opt,
-                            data
-                        }));
-                    })
-            ).then(results => {
-                const traces = results
-                    .filter(r => r.data && r.data.counts && r.data.energy_per_channel)
-                    .map((r, idx) => ({
-                        x: r.data.energy_per_channel,
-                        y: r.data.counts,
-                        type: 'scatter',
-                        mode: 'lines',
-                        name: r.name +
-                            (r.hasIterations ? ` (Iterationen: ${document.querySelector(`.iteration-input[data-endpoint="${r.endpoint}"]`)?.value || ''})` : '') +
-                            (r.endpoint === "/smoothed" ? `, Window: ${document.querySelector('.window-input[data-endpoint="/smoothed"]').value}` : '') +
-                            (r.endpoint === "/background" ? ` (${document.querySelector('.background-source[data-endpoint="/background"]').selectedOptions[0].text})` : ''),
-                        line: { color: r.color, width: 3 }
-                    }));
-
-                const layout = {
-                    title: 'Counts Plot',
-                    plot_bgcolor: '#f8f9fa',
-                    paper_bgcolor: '#f8f9fa',
-                    xaxis: { title: 'Energy [keV]', gridcolor: '#e0e1dd' },
-                    yaxis: { 
-                        title: 'Counts',
-                        type: 'log',
-                        gridcolor: '#e0e1dd'
-                    },
-                    font: { family: 'Segoe UI, Arial, sans-serif', color: '#22223b' }
-                };
-
-                Plotly.newPlot('plot', traces, layout, {responsive: true});
-            });
-        }
-
-        // Initiales Plotten
-        plotSelectedSpectra();
-
-        // Event Listener für Checkboxen und Inputfelder
-        document.querySelectorAll('.spectrum-checkbox').forEach(cb => {
-            cb.addEventListener('change', plotSelectedSpectra);
-        });
-        document.querySelectorAll('.iteration-input').forEach(input => {
-            input.addEventListener('input', plotSelectedSpectra);
-        });
-        document.querySelectorAll('.window-input').forEach(input => {
-            input.addEventListener('input', plotSelectedSpectra);
-        });
-        document.querySelectorAll('.background-source').forEach(input => {
-            input.addEventListener('change', plotSelectedSpectra);
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>

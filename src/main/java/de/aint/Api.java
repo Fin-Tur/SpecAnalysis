@@ -1,12 +1,16 @@
 package de.aint;
-import de.aint.models.Spectrum;
 import de.aint.operations.OvulationOperator;
 import de.aint.operations.SubstractOperator;
+import de.aint.readers.IsotopeReader;
 import de.aint.readers.Reader;
 import io.javalin.Javalin;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import de.aint.models.*;
+
 
 public class Api {
 
@@ -28,12 +32,17 @@ public class Api {
         Spectrum spec = Reader.readFile(
                 "C:/Users/f.willems/IdeaProjects/SpecAnalysis/src/main/resources/Leere_Kammer_85_40_50_1000_930_p_8k.Spe");
 
+        //Create background specs cuz c++ lib is not done yet
         Spectrum bckground = createbckSpec(spec);
         Spectrum smbckground = createSmck(spec);
        
         // Caches für verschiedene Iterationszahlen
         Map<Integer, Spectrum> smoothedCache = new ConcurrentHashMap<>();
         Map<Integer, Spectrum> backgroundCache = new ConcurrentHashMap<>();
+
+        //get Isotopes
+        IsotopeReader isotopeReader = new IsotopeReader();
+        ArrayList<Isotop> isotopes = isotopeReader.isotopes;
 
         System.out.println("Started Javalin server on port 7000");
 
@@ -66,6 +75,11 @@ public class Api {
                 backgroundSpectrum = bckground;
             }
             ctx.json(backgroundSpectrum);
+        });
+
+        app.get("/isotopes", ctx -> {
+            System.out.println(isotopes.size() + " isotopes loaded!");
+            ctx.json(isotopes);
         });
 
     }

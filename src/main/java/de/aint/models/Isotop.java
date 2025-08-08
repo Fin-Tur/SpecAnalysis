@@ -2,15 +2,15 @@ package de.aint.models;
 
 public class Isotop {
     //IDentifier
-    public long id;
+    public final long id;
     //Symbol
-    public String symbol;
-    //energy (keV) of peak
-    public double energy;
-    //Intensity of peak (counts)
-    public double intensity;
+    public final String symbol;
+    //energy (keV) of peak beginning
+    public final double energy;
+    //Intensity of peak keV each spaltung
+    public final double intensity;
     //Relative commomness
-    public double isotope_abundance;
+    public final double isotope_abundance;
 
     //Construcotr for Isotope
     public Isotop(long id, String symbol, double energy, double intensity, double isotope_abundance) {
