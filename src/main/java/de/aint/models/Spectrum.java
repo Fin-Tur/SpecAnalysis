@@ -18,9 +18,9 @@ public class Spectrum {
     private float srcForce = 1;
 
     //Variables for channel - energy calculation
-    private final double ec_offset;
-    private final double ec_slope;
-    private final double ec_quad;
+    private double ec_offset;
+    private double ec_slope;
+    private double ec_quad;
     //Constructor for Spe files
     public Spectrum(double[] counts, double ec_offset, double ec_slope, double ec_quad){
         this.channel_count = counts.length;
@@ -52,6 +52,14 @@ public class Spectrum {
     public void normalizeCounts(){
         if(srcForce == 1) return;
         IntStream.range(0,this.counts.length).forEach(i -> this.counts[i]*=this.srcForce);
+    }
+
+    public void changeEnergyCal(int channel1, double energy1, int channel2, double energy2){
+        double slope = (energy2-energy1) / (channel2-channel1);
+        double offset = energy1 - slope*channel1;
+        this.ec_offset = offset;
+        this.ec_slope = slope;
+        this.convertChannelsToEnergy();
     }
 
     public void setSrcForce(float cntMult){

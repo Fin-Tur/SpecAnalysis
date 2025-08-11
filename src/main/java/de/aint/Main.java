@@ -1,27 +1,27 @@
 package de.aint;
 
 
-import de.aint.models.Spectrum;
+import de.aint.detectors.PeakDetection;
+import de.aint.models.*;
 import de.aint.operations.AddOperator;
 import de.aint.operations.OvulationOperator;
+import de.aint.operations.SubstractOperator;
 import de.aint.readers.Reader;
 
 public class Main {
     public static void main(String[] args){
 
         Spectrum spec1 = Reader.readFile("C:/Users/f.willems/IdeaProjects/SpecAnalysis/src/main/resources/Leere_Kammer_85_40_50_1000_930_p_8k.Spe");
-        Spectrum smooth = OvulationOperator.smoothSpectrum(spec1, 17, 2, true, 2);
-        double[] counts1 = smooth.getCounts();
+        spec1.changeEnergyCal(1677, 2223.248, 391, 511);
+        Spectrum smooth = OvulationOperator.smoothSpectrum(spec1, 11, 2, true, 1);
+        Spectrum bckgroundsmt = Api.createSmck(spec1);
 
-        for(var count : counts1){
-            System.out.print(count + ",");
+    
+
+        ROI[] detectedPeaks = PeakDetection.detectPeaks(spec1, bckgroundsmt);
+        for(ROI peak : detectedPeaks) {
+            System.out.println("Detected Isotope: " + peak.getEstimatedIsotope() + " @ energy [keV] "+ peak.getStartEnergy()+1);
         }
-
-        Spectrum spec2 = Reader.readFile("C:/Users/f.willems/IdeaProjects/SpecAnalysis/src/main/resources/Leere_Kammer_85_40_50_1000_930_p_8k.Spe");
-
-
-        Spectrum specRes = AddOperator.add(spec1, spec2, 8000);
-
 
         return;
 

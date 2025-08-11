@@ -2,7 +2,7 @@ package de.aint.models;
 
 public class Isotop {
     //IDentifier
-    public final long id;
+    public final String id;
     //Symbol
     public final String symbol;
     //energy (keV) of peak beginning
@@ -13,7 +13,7 @@ public class Isotop {
     public final double isotope_abundance;
 
     //Construcotr for Isotope
-    public Isotop(long id, String symbol, double energy, double intensity, double isotope_abundance) {
+    public Isotop(String id, String symbol, double energy, double intensity, double isotope_abundance) {
         this.id = id;
         this.symbol = symbol;
         this.energy = energy;

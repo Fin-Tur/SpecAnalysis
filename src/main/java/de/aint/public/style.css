@@ -20,7 +20,7 @@ body {
             letter-spacing: 1px;
         }
         h2{
-            color: #ffffffb4;
+            color: hsl(0, 0%, 100%);
             margin-bottom: 16px;
             text-shadow: #3f3f41 1px 1px 2px;
             font-size: 1.5em;
@@ -148,6 +148,9 @@ body {
             outline: none;
             box-shadow: 0 2px 8px rgba(69,123,157,0.10);
         }
+        .element-search:hover {
+            background : #9487147e
+        }
         #isotopeInfo {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -168,6 +171,20 @@ body {
         .isotope-card:hover {
             background: #dbd5a467;
             box-shadow: 0px 12px 20px rgba(0, 0, 0, 0);
+        }
+        
+        .clearSelectedIsotopes {
+            background: #f0efeb;
+            border: 1.5px solid #bfc0c0;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 0.9em;
+            color: #22223b;
+            cursor: pointer;
+            transition: background 0.2s, border 0.2s;
+        }
+        .clearSelectedIsotopes:hover {
+            background: #9487147e;
         }
 
         @media (max-width: 700px) {

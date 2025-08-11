@@ -8,6 +8,7 @@ public class ROI {
     private final double endEnergy;
 
     private double areaOverBackground;
+    private String estimatedIsotope = null;
 
     // Getters
     public Spectrum getSpectrum() {
@@ -20,12 +21,23 @@ public class ROI {
         return endEnergy;
     }
     public double getAreaOverBackground() {
+
         return areaOverBackground;
     }
+
+    public String getEstimatedIsotope() {
+        return estimatedIsotope;}
 
     //Setter
     public void setAreaOverBackground() {
         this.areaOverBackground = AreaCalculator.calculateAreaOverBackground(this.spectrum, this.startEnergy, this.endEnergy);
+    }
+
+    public void setEstimatedIsotope(Isotop isotope) {
+        if(isotope == null) this.estimatedIsotope="unk";
+        else{
+            this.estimatedIsotope = isotope.symbol + "--" + isotope.id;
+        }
     }
 
     //Constructor for a Region of Interest (ROI) in a Spectrum

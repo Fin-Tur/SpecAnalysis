@@ -23,6 +23,10 @@
                     Original
                 </label>
                 <label class="checkbox-label">
+                    <input type="checkbox" class="spectrum-checkbox" value="/custom">
+                    Custom
+                </label>
+                <label class="checkbox-label">
                     <input type="checkbox" class="spectrum-checkbox" value="/smoothed" checked>
                     Smoothed
                     <input type="number" class="iteration-input" data-endpoint="/smoothed" value="5" min="1" max="100" step="1" style="width:40px;" title="Iterations">
@@ -44,6 +48,7 @@
         <div id="isotopePage" style="display:none;">
             <h2>Isotope-Information</h2>
             <input type="text" id="elementSearch" placeholder="Element-Symbol (e.g. H, He, Li)" autocomplete="off" class="element-search">
+            <button id="clearSelectedIsotopes" class = "clearSelectedIsotopes">Clear</button>
             <div id="isotopeInfo">Loading Isotopes...</div>
         </div>
     </div>

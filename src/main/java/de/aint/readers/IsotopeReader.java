@@ -10,6 +10,7 @@ public class IsotopeReader {
     public ArrayList<Isotop> isotopes = new ArrayList<>();
 
     public IsotopeReader() {
+        isotopes.add(new Isotop("1", "ANNH", 511, 0, 0));
         File file = new File("C:/Users/f.willems/IdeaProjects/SpecAnalysis/src/main/resources/isotop_details.txt");
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
@@ -17,7 +18,7 @@ public class IsotopeReader {
             line = br.readLine(); // Skip Annhilation Peak
             while ((line = br.readLine()) != null) {
             String[] args = line.trim().split("\\s+");
-            long id = Long.parseLong(args[0]);
+            String id = args[0];
             String symbol = args[1];
             double energy = Double.parseDouble(args[2]);
             double intensity = Double.parseDouble(args[3]);

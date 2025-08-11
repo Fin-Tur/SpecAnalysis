@@ -15,8 +15,8 @@ public class SubstractOperator {
             double[] counts2 = spec2.getCounts();
             double[] counts = new double[spec1.getChannel_count()];
             //Substtraction
-            IntStream.range(0, counts.length).forEach(i -> counts[i] = counts1[i]-counts2[i]);
-
+            IntStream.range(0, counts.length).forEach(i -> counts[i] = counts1[i]-counts2[i] > 1 ? counts1[i]-counts2[i] : 1);
+            
             return new Spectrum(spec1.getEnergy_per_channel(), counts);
         }//Else
 

@@ -1,22 +1,64 @@
 const spectrumOptions = [
     { endpoint: "/", name: "Original", color: "#e63946" },
+    { endpoint: "/custom", name: "Custom", color: "#aa1a92ff"},
     { endpoint: "/smoothed", name: "Geglättet", color: "#457b9d", hasIterations: true },
     { endpoint: "/background", name: "Hintergrund", color: "#2a9d8f", hasIterations: true },
     { endpoint: "/smbackground", name: "SM Hintergrund", color: "#f1faee", hasIterations: false }
 ];
 
-function fetchSpectrum(endpoint, iterations, windowSize, backgroundSource) {
+function fetchSpectrum(endpoint, iterations, windowSize, backgroundSource, customIsotopes) {
     let url = 'http://localhost:7000' + endpoint;
     const params = [];
     if (iterations) params.push('iterations=' + iterations);
     if (windowSize) params.push('window_size=' + windowSize);
     if (backgroundSource) params.push('source=' + backgroundSource);
+    if (customIsotopes && customIsotopes.length > 0) params.push('isotopes=' + customIsotopes.join(','));
     if (params.length > 0) url += '?' + params.join('&');
     return fetch(url)
         .then(response => response.json())
         .catch(() => null);
 }
 
+let allIsotopes = [];
+let selectedIsotopeIds = new Set();
+
+function renderIsotopes(filtered) {
+    const container = document.getElementById('isotopeInfo');
+
+    if (!document.getElementById('elementSearch').value.trim()) {
+        container.innerHTML = '<div style="color:#888;">Please enter an element symbol.</div>';
+        return;
+    }
+    if (!filtered.length) {
+        container.innerHTML = '<div style="color:#888;">No Isotopes found.</div>';
+        return;
+    }
+    container.innerHTML = filtered.map(iso =>
+        `<div class="isotope-card">
+            <label style="display:flex;align-items:center;gap:8px;">
+                <input type="checkbox" class="isotope-checkbox" value="${iso.id}" ${selectedIsotopeIds.has(iso.id) ? 'checked' : ''}>
+                <span>
+                    <b>${iso.symbol}</b> (${iso.energy} keV)
+                    <br><span style="color:#457b9d;">Intensity:</span> ${iso.intensity}
+                    <br><span style="color:#457b9d;">Abundance:</span> ${iso.isotope_abundance}
+                </span>
+            </label>
+        </div>`
+    ).join('');
+
+    // Event Listener für alle Checkboxen nach dem Rendern
+    container.querySelectorAll('.isotope-checkbox').forEach(cb => {
+        cb.addEventListener('change', function() {
+            if (cb.checked) {
+                selectedIsotopeIds.add(cb.value);
+            } else {
+                selectedIsotopeIds.delete(cb.value);
+            }
+        });
+    });
+}
+
+// Beim Custom-Plot: IDs aus dem Set verwenden!
 function plotSelectedSpectra() {
     const checkedBoxes = Array.from(document.querySelectorAll('.spectrum-checkbox:checked'));
     const selectedEndpoints = checkedBoxes.map(cb => cb.value);
@@ -28,6 +70,7 @@ function plotSelectedSpectra() {
                 let iterations = null;
                 let windowSize = null;
                 let backgroundSource = null;
+                let customIsotopes = null;
                 if (opt.hasIterations) {
                     const input = document.querySelector(`.iteration-input[data-endpoint="${opt.endpoint}"]`);
                     iterations = input ? input.value : null;
@@ -40,7 +83,11 @@ function plotSelectedSpectra() {
                     const bgSource = document.querySelector('.background-source[data-endpoint="/background"]');
                     backgroundSource = bgSource ? bgSource.value : null;
                 }
-                return fetchSpectrum(opt.endpoint, iterations, windowSize, backgroundSource).then(data => ({
+                if (opt.endpoint === "/custom") {
+                    // IDs der ausgewählten Isotope aus dem Set nehmen
+                    customIsotopes = Array.from(selectedIsotopeIds);
+                }
+                return fetchSpectrum(opt.endpoint, iterations, windowSize, backgroundSource, customIsotopes).then(data => ({
                     ...opt,
                     data
                 }));
@@ -93,27 +140,10 @@ document.querySelectorAll('.window-input').forEach(input => {
 document.querySelectorAll('.background-source').forEach(input => {
     input.addEventListener('change', plotSelectedSpectra);
 });
-
-let allIsotopes = [];
-
-function renderIsotopes(filtered) {
-    const container = document.getElementById('isotopeInfo');
-    if (!document.getElementById('elementSearch').value.trim()) {
-        container.innerHTML = '<div style="color:#888;">Please enter an element symbol.</div>';
-        return;
-    }
-    if (!filtered.length) {
-        container.innerHTML = '<div style="color:#888;">No Isotopes found.</div>';
-        return;
-    }
-    container.innerHTML = filtered.map(iso =>
-        `<div class="isotope-card">
-            <b>${iso.symbol}</b> (${iso.energy} keV)
-            <br><span style="color:#457b9d;">Intensity:</span> ${iso.intensity}
-            <br><span style="color:#457b9d;">Abundance:</span> ${iso.isotope_abundance}
-        </div>`
-    ).join('');
-}
+document.getElementById('clearSelectedIsotopes').addEventListener('click', function() {
+    // Alle ausgewählten Isotope zurücksetzen
+    selectedIsotopeIds.clear()
+    });
 
 // Beim Seitenwechsel Isotope laden
 document.getElementById('pageSelect').addEventListener('change', function() {
@@ -142,4 +172,25 @@ document.getElementById('elementSearch').addEventListener('input', function() {
     }
     const filtered = allIsotopes.filter(iso => iso.symbol.toLowerCase().startsWith(search));
     renderIsotopes(filtered);
+});
+
+// Initiales Anzeigen der richtigen Seite und ggf. Laden der Daten
+window.addEventListener('DOMContentLoaded', function() {
+    const pageSelect = document.getElementById('pageSelect');
+    const value = pageSelect.value;
+    document.getElementById('plotPage').style.display = value === 'plot' ? '' : 'none';
+    document.getElementById('isotopePage').style.display = value === 'isotopes' ? '' : 'none';
+    if (value === 'plot') {
+        plotSelectedSpectra();
+    } else if (value === 'isotopes') {
+        fetch('http://localhost:7000/isotopes')
+            .then(res => res.json())
+            .then(data => {
+                allIsotopes = data;
+                renderIsotopes(allIsotopes);
+            })
+            .catch(() => {
+                document.getElementById('isotopeInfo').innerText = 'An Error occurred while loading isotope data.';
+            });
+    }
 });
