@@ -13,8 +13,16 @@ public class SpectrumBuilder {
         Isotop[] selectedIsos = isotopes.stream().filter(iso -> selectedIsotopesAsIDString.contains(iso.id)).toArray(Isotop[]::new);
 
         //Create Spectrum with peaks, over selected Channels 
+        double[] counts = spectrum.getCounts();
 
-        return spectrum;
+        for(var iso : selectedIsos){
+            double energy = iso.energy;
+            int channel = Helper.findChannelFromEnergy(energy, spectrum.getEnergy_per_channel());
+            counts[channel] += 2.5*counts[channel];
+        }
+
+        Spectrum customSpectrum = new Spectrum(spectrum.getEnergy_per_channel(), counts);
+        return customSpectrum;
     }
 
         public static Spectrum createBackgroundSpectrum(Spectrum spec, double lambda, double p, int maxIterations) {

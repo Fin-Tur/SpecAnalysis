@@ -19,7 +19,7 @@ public class MatchRoiWithIsotop {
         //roi.setAreaOverBackground();
 
         for (Isotop isotop : isoReader.isotopes) {
-            if( matches_energy((roi.getStartEnergy()+1), isotop.energy, tolerance)) {
+            if( matches_energy((roi.getPeakCenter()), isotop.energy, tolerance)) {
                 // If both energy and intensity match, return the isotop
                 return isotop;
             }

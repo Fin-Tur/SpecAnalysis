@@ -1,3 +1,10 @@
+window.selectedFile = null;
+document.getElementById('fileInput').addEventListener('change', function(e) {
+    window.selectedFile = e.target.files[0] || null;
+    document.getElementById('fileName').textContent = window.selectedFile ? window.selectedFile.name : '';
+    plotSelectedSpectra();
+});
+
 const spectrumOptions = [
     { endpoint: "/", name: "Original", color: "#e63946" },
     { endpoint: "/custom", name: "Custom", color: "#aa1a92ff"},
@@ -7,6 +14,16 @@ const spectrumOptions = [
 ];
 
 function fetchSpectrum(endpoint, iterations, windowSize, backgroundSource, customIsotopes) {
+    if (endpoint === "/" && window.selectedFile) {
+        // File-Upload for Original
+        const formData = new FormData();
+        formData.append('file', window.selectedFile);
+        return fetch('http://localhost:7000/', {
+            method: 'POST',
+            body: formData
+        }).then(response => response.json())
+          .catch(() => null);
+    }
     let url = 'http://localhost:7000' + endpoint;
     const params = [];
     if (iterations) params.push('iterations=' + iterations);
@@ -83,6 +100,17 @@ function renderPeaks(peaks){
             </label>
         </div>`
     ).join('');
+
+    //List of all found isotopes ex UNK and ANNH
+    const found = Array.from(new Set(
+        peaks
+            .filter(peak => peak.estimatedIsotope && peak.estimatedIsotope !== "UNK" && peak.estimatedIsotope != "ANNH")
+            .map(peak => peak.estimatedIsotope)
+    ));
+    document.getElementById("foundElements").innerHTML =
+        found.length
+            ? `<span id="foundElements-label">Recognized Isotopes:</span> ${found.map(e => `<span class="found-chip">${e}</span>`).join('')}`
+            : '';
 }
 
 // Beim Custom-Plot: IDs aus dem Set verwenden!
@@ -171,8 +199,24 @@ document.getElementById('clearSelectedIsotopes').addEventListener('click', funct
     // Alle ausgewählten Isotope zurücksetzen
     selectedIsotopeIds.clear()
     });
+document.getElementById('elementSearch').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    const filteredIsotopes = allIsotopes.filter(iso => iso.symbol.toLowerCase().includes(searchTerm));
+    renderIsotopes(filteredIsotopes);
+});
 
-// Beim Seitenwechsel Isotope laden
+function loadAndRenderPeaks() {
+    fetch("http://localhost:7000/peaks")
+        .then(res => res.json())
+        .then(data => {
+            renderPeaks(data);
+        })
+        .catch(() => {
+            document.getElementById("peakInfo").innerText = "No Peaks found!";
+        });
+}
+
+// Beim Seitenwechsel
 document.getElementById('pageSelect').addEventListener('change', function() {
     const value = this.value;
     document.getElementById('plotPage').style.display = value === 'plot' ? '' : 'none';
@@ -188,27 +232,12 @@ document.getElementById('pageSelect').addEventListener('change', function() {
             .catch(() => {
                 document.getElementById('isotopeInfo').innerText = 'An Error occurred while loading isotope data.';
             });
-    }else if(value === "peaks") {
-        this.fetch("http://localhost:7000/peaks").then(res => res.json()).then(data => {
-            renderPeaks(data);
-        }).catch(() => {
-            document.getElementById("peakInfo").innerText = "No Peaks found error!";
-        });
+    } else if (value === "peaks") {
+        loadAndRenderPeaks();
     }
 });
 
-// Filter bei Eingabe
-document.getElementById('elementSearch').addEventListener('input', function() {
-    const search = this.value.trim().toLowerCase();
-    if (!search) {
-        renderIsotopes(allIsotopes);
-        return;
-    }
-    const filtered = allIsotopes.filter(iso => iso.symbol.toLowerCase().startsWith(search));
-    renderIsotopes(filtered);
-});
-
-// Initiales Anzeigen der richtigen Seite und ggf. Laden der Daten
+// Optional: Auch beim erstmaligen Laden, falls "peaks" vorausgewählt ist
 window.addEventListener('DOMContentLoaded', function() {
     const pageSelect = document.getElementById('pageSelect');
     const value = pageSelect.value;
@@ -227,11 +256,8 @@ window.addEventListener('DOMContentLoaded', function() {
             .catch(() => {
                 document.getElementById('isotopeInfo').innerText = 'An Error occurred while loading isotope data.';
             });
-    }else if(value === "peaks") {
-        this.fetch("http://localhost:7000/peaks").then(res => res.json()).then(data => {
-            renderPeaks(data);
-        }).catch(() => {
-            document.getElementById("peakInfo").innerText = "Error!";
-        });
+    } else if (value === "peaks") {
+        loadAndRenderPeaks();
     }
 });
+

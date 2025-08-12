@@ -54,7 +54,8 @@ public class Spectrum {
         IntStream.range(0,this.counts.length).forEach(i -> this.counts[i]*=this.srcForce);
     }
 
-    public void changeEnergyCal(int channel1, double energy1, int channel2, double energy2){
+    //Func to change energy calibration
+    /*public void changeEnergyCal(int channel1, double energy1, int channel2, double energy2){
 
         double slope = (energy2-energy1) / (channel2-channel1);
         double offset = energy1 - slope*channel1;
@@ -62,7 +63,33 @@ public class Spectrum {
         this.ec_offset = offset;
         this.ec_slope = slope;
         this.convertChannelsToEnergy();
+    }*/
+
+    public void changeEnergyCal(int[] channels, double[] energies) {
+    if (channels.length != energies.length || channels.length < 2) {
+        throw new IllegalArgumentException("Mindestens zwei (channel, energy)-Paare erforderlich");
     }
+
+    int n = channels.length;
+    double sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+
+    // Summen für lineare Regression berechnen
+    for (int i = 0; i < n; i++) {
+        sumX  += channels[i];
+        sumY  += energies[i];
+        sumXY += channels[i] * energies[i];
+        sumX2 += channels[i] * channels[i];
+    }
+
+    // Steigung und Offset berechnen (y = slope * x + offset)
+    double slope  = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    double offset = (sumY - slope * sumX) / n;
+
+    this.ec_offset = offset;
+    this.ec_slope = slope;
+    this.convertChannelsToEnergy();
+}
+
 
 
     public void setSrcForce(float cntMult){

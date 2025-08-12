@@ -20,14 +20,14 @@ public class PeakDetection {
             double[] backgroundCnt = background.getCounts();
 
             double[] energy = spec.getEnergy_per_channel();
-            //System.out.println("ENERGY\tCOUNTS\tCHANNEL\tTRHESHOLD\n");
+            System.out.println("ENERGY\tCOUNTS\tCHANNEL\tTRHESHOLD\n");
             for(int i = 1; i<counts.length - 1; i++) {
                 //Initialize treshhold
                 double treshhold = backgroundCnt[i] + 1.65f * Math.sqrt(backgroundCnt[i]);
                 if(counts[i] > counts[i - 1] && counts[i] > counts[i + 1] && counts[i] > treshhold) {
                     // Found a peak
                     ////System.out.println("Found peak at " + smoothed.getEnergy_per_channel()[i] + " channel " + i + " with intensity " + counts[i]);
-                    //System.out.printf("%f\t%f\t%d\t%f\n", smoothed.getEnergy_per_channel()[i], counts[i], i, treshhold);
+                    System.out.printf("%f\t%f\t%d\t%f\n", smoothed.getEnergy_per_channel()[i], counts[i], i, treshhold);
                     peaks.add(new ROI(spec, energy[i], energy[i], energy[i]));
                 }
             }

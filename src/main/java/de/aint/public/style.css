@@ -119,7 +119,7 @@ body {
         }
 
         .page-select {
-            width: 200px;
+            width: 180px;
             height: 36px;
             padding: 4px 10px;
             border: 1.5px solid #bfc0c0;
@@ -213,7 +213,7 @@ body {
             transition: box-shadow 0.2s;
         }
 
-        @media (max-width: 700px) {
+         @media (max-width: 700px) {
             .container {
                 padding: 16px 4vw;
             }
@@ -222,3 +222,95 @@ body {
                 gap: 12px;
             }
         }
+
+        #foundElements {
+            background: #f0eeee;
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin-top: 32px;
+            margin-bottom: 8px;
+            box-shadow: 0 1px 6px rgba(255, 215, 0, 0.08);
+            font-size: 0.9em;
+            color: #e7e5e5;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            min-height: 32px;
+            font-weight: 500;
+            letter-spacing: 0.2px;
+            flex-wrap: wrap;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        #foundElements b {
+            color: #858484;
+            margin-right: 2px;
+            font-size: 1em;
+        }
+
+    #foundElements-label {
+        color: #00000083;
+        margin-right: 10px;
+        font-size: 1.08em;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+        .found-chip {
+            background: #e0e1dd;
+            color: #22223b;
+            border-radius: 14px;
+            padding: 3px 12px;
+            margin-right: 6px;
+            font-weight: 500;
+            display: inline-block;
+            font-size: 0.98em;
+            box-shadow: 0 1px 4px rgba(69,123,157,0.08);
+            border: 1px solid #bfc0c0;
+            transition: background 0.2s, color 0.2s;
+        }
+        .found-chip:hover {
+            background: #457b9d;
+            color: #fff;
+        }
+
+        @media (max-width: 700px) {
+            #foundElements {
+                padding: 4px 2px;
+                font-size: 0.95em;
+            }
+        }
+
+.custom-file-btn {
+    display: inline-block;
+    padding: 8px 18px;
+    background: #f2f3f3;
+    color: #636060;
+    border-radius: 8px;
+    border: none;
+    font-size: 1em;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.2s;
+    margin-bottom: 20px;
+    box-shadow: #22223b;
+}
+.custom-file-btn:hover {
+    background: #b4b4b4;
+}
+.file-name-label {
+    margin-left: 14px;
+    color: #22223b;
+    font-size: 0.98em;
+    vertical-align: middle;
+}
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+

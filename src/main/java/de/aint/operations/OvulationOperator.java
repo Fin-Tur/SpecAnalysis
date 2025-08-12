@@ -98,7 +98,7 @@ public class OvulationOperator {
             for(int i = half_window; i<spec.getChannel_count()-half_window; i++){
                 double count = 0;
                 //Check for false peaks
-                if(eraseOutliers && exceedsStandartDerivation(Arrays.copyOfRange(counts, i-half_window, i+half_window+1), 3f)){
+                if(eraseOutliers && exceedsStandartDerivation(Arrays.copyOfRange(counts, i-half_window, i+half_window+1), 5f)){
                     smoothed_counts[i] = counts[i];
                     continue;
                 }
