@@ -15,6 +15,7 @@ public class PeakDetection {
             Spectrum smoothed = OvulationOperator.smoothSpectrum(spec, 11, 2, true, 1);
 
             Spectrum clearedSpectrum = SubstractOperator.substract(smoothed, background, smoothed.getChannel_count());
+
             double[] counts = clearedSpectrum.getCounts();
             double[] backgroundCnt = background.getCounts();
 
@@ -27,15 +28,16 @@ public class PeakDetection {
                     // Found a peak
                     ////System.out.println("Found peak at " + smoothed.getEnergy_per_channel()[i] + " channel " + i + " with intensity " + counts[i]);
                     //System.out.printf("%f\t%f\t%d\t%f\n", smoothed.getEnergy_per_channel()[i], counts[i], i, treshhold);
-                    peaks.add(new ROI(spec, energy[i-1], energy[i+1]));
+                    peaks.add(new ROI(spec, energy[i], energy[i], energy[i]));
                 }
             }
 
         //Match ROIs w Isotopes
         IsotopeReader isotopeReader = new IsotopeReader();
         for(ROI roi : peaks) {
-            Isotop matchedIso = MatchRoiWithIsotop.matchRoiWithIsotop(roi, isotopeReader);
+            Isotop matchedIso = MatchRoiWithIsotop.matchRoiWithIsotop(roi, isotopeReader, 1);
             roi.setEstimatedIsotope(matchedIso);
+            //System.out.println("Isotop matched!");
             
         }
         //Return peaks

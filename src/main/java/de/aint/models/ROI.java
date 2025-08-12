@@ -6,9 +6,11 @@ public class ROI {
     private final Spectrum spectrum;
     private final double startEnergy;
     private final double endEnergy;
+    private final double peakCenter;
 
     private double areaOverBackground;
     private String estimatedIsotope = null;
+    private Isotop matchedIsotope = null;
 
     // Getters
     public Spectrum getSpectrum() {
@@ -25,8 +27,16 @@ public class ROI {
         return areaOverBackground;
     }
 
+    public double getPeakCenter() {
+        return peakCenter;
+    }
+
     public String getEstimatedIsotope() {
         return estimatedIsotope;}
+
+    public Isotop getMatchedIsotope(){
+        return matchedIsotope;
+    }
 
     //Setter
     public void setAreaOverBackground() {
@@ -34,17 +44,21 @@ public class ROI {
     }
 
     public void setEstimatedIsotope(Isotop isotope) {
-        if(isotope == null) this.estimatedIsotope="unk";
-        else{
-            this.estimatedIsotope = isotope.symbol + "--" + isotope.id;
+        if(isotope == null) {
+            this.estimatedIsotope="unk"; 
+        }else{
+            this.estimatedIsotope = isotope.symbol;
+            this.matchedIsotope = isotope;
         }
     }
 
     //Constructor for a Region of Interest (ROI) in a Spectrum
-    public ROI(Spectrum spec, double startEnergy, double endEnergy) {
+    public ROI(Spectrum spec, double startEnergy, double endEnergy, double peakCenter) {
         this.spectrum = spec;
         this.startEnergy = startEnergy;
         this.endEnergy = endEnergy;
+        this.peakCenter = peakCenter;
+
 
     }
 

@@ -35,9 +35,10 @@ public class Api {
 
 
         
-        //Calibrate using Annihilation + H peak
+        //Calibrate using Annihilation and H_1 peak
+
         spec.changeEnergyCal(1677, 2223.248, 391, 511);
-        
+
         //Create background specs cuz c++ lib is not done yet
         Spectrum bckground = createbckSpec(spec);
         Spectrum smbckground = createSmck(spec);
@@ -105,6 +106,7 @@ public class Api {
 
         app.get("/peaks", ctx -> {
             ROI[] peaks = PeakDetection.detectPeaks(spec, smbckground);
+            System.out.println("Sendin "+ peaks.length +" peaks");
             ctx.json(peaks);
         });
 

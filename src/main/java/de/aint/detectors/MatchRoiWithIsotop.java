@@ -14,19 +14,17 @@ public class MatchRoiWithIsotop {
     }
 
     // Method to match a region of interest (ROI) with isotopic data
-    public static Isotop matchRoiWithIsotop(ROI roi, IsotopeReader isoReader) {
+    public static Isotop matchRoiWithIsotop(ROI roi, IsotopeReader isoReader, double tolerance) {
         //Prepare roi + isotopes for matching
         //roi.setAreaOverBackground();
 
-
-
         for (Isotop isotop : isoReader.isotopes) {
-            if( matches_energy((roi.getStartEnergy()+1), isotop.energy, 1.0)) {
+            if( matches_energy((roi.getStartEnergy()+1), isotop.energy, tolerance)) {
                 // If both energy and intensity match, return the isotop
                 return isotop;
             }
         }
 
-        return null;
+        return isoReader.isotopes.getFirst();
     }
 }

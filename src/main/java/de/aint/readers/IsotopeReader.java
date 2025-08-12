@@ -10,6 +10,7 @@ public class IsotopeReader {
     public ArrayList<Isotop> isotopes = new ArrayList<>();
 
     public IsotopeReader() {
+        isotopes.add(new Isotop("0", "UNK", 0, 0, 0));
         isotopes.add(new Isotop("1", "ANNH", 511, 0, 0));
         File file = new File("C:/Users/f.willems/IdeaProjects/SpecAnalysis/src/main/resources/isotop_details.txt");
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {

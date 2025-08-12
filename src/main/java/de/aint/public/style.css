@@ -187,6 +187,32 @@ body {
             background: #9487147e;
         }
 
+        #peakInfo {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+            padding: 0;
+            list-style: none;
+        }
+        .peak-card {
+            background: #ffffff93;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            padding: 14px 18px;
+            font-size: 1em;
+            color: #22223b;
+            transition: box-shadow 0.2s;
+        }
+        .peak-card-unk {
+            background: #da48487e;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            padding: 14px 18px;
+            font-size: 1em;
+            color: #22223b;
+            transition: box-shadow 0.2s;
+        }
+
         @media (max-width: 700px) {
             .container {
                 padding: 16px 4vw;

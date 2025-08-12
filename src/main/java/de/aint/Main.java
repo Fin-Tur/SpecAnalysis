@@ -12,7 +12,7 @@ public class Main {
     public static void main(String[] args){
 
         Spectrum spec1 = Reader.readFile("C:/Users/f.willems/IdeaProjects/SpecAnalysis/src/main/resources/Leere_Kammer_85_40_50_1000_930_p_8k.Spe");
-        spec1.changeEnergyCal(1677, 2223.248, 391, 511);
+        //spec1.changeEnergyCal(1677, 2223.248, 391, 511);
         Spectrum smooth = OvulationOperator.smoothSpectrum(spec1, 11, 2, true, 1);
         Spectrum bckgroundsmt = Api.createSmck(spec1);
 

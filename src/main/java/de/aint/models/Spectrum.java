@@ -55,12 +55,16 @@ public class Spectrum {
     }
 
     public void changeEnergyCal(int channel1, double energy1, int channel2, double energy2){
+
         double slope = (energy2-energy1) / (channel2-channel1);
         double offset = energy1 - slope*channel1;
+
+
         this.ec_offset = offset;
         this.ec_slope = slope;
         this.convertChannelsToEnergy();
     }
+
 
     public void setSrcForce(float cntMult){
         this.srcForce = cntMult;
