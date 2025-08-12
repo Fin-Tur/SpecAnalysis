@@ -59,7 +59,6 @@ public class Spectrum {
         double slope = (energy2-energy1) / (channel2-channel1);
         double offset = energy1 - slope*channel1;
 
-
         this.ec_offset = offset;
         this.ec_slope = slope;
         this.convertChannelsToEnergy();
