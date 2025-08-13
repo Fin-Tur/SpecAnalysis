@@ -68,6 +68,7 @@ public class OvulationOperator {
         //Normalize weight, so weights[] = 1
         double sum = 0.0;
         for (double w : weights) sum += w;
+        if (sum == 0) sum = 1; // Avoid division by zero
         for (int i = 0; i < weights.length; i++) {
             weights[i] /= sum;
         }
