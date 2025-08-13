@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import de.aint.models.*;
+import de.aint.operations.OvulationOperator;
 import de.aint.builders.SpectrumBuilder;
 import de.aint.detectors.PeakDetection;
 
@@ -52,7 +53,13 @@ public class Api {
         app.get("/smoothed", ctx -> {
             int iterations = ctx.queryParamAsClass("iterations", Integer.class).getOrDefault(1);
             int windowSize = ctx.queryParamAsClass("window_size", Integer.class).getOrDefault(11);
-            Spectrum smoothed = SpectrumBuilder.createSmoothedSpectrum(spec, windowSize, 2, true, iterations);
+            String algorithm = ctx.queryParamAsClass("algorithm", String.class).getOrDefault("SG");
+            Spectrum smoothed;
+            if ("SG".equalsIgnoreCase(algorithm)) {
+                smoothed = SpectrumBuilder.createSmoothedSpectrumUsingSG(spec, windowSize, 2, true, iterations);
+            } else {
+                smoothed = SpectrumBuilder.createSmoothedSpectrumUsingGauss(spec, 4);
+            }
             ctx.json(smoothed);
         });
 
@@ -81,6 +88,9 @@ public class Api {
                 }
             }
             Spectrum customSpectrum = SpectrumBuilder.createCustomSpectrum(variants[3], selectedIsotopes, isotopeReader);
+
+            //Test Deploy Spectra
+            //Spectrum customSpectrum = OvulationOperator.smoothSpectrumUsingGauss(spec, 4);
 
             ctx.json(customSpectrum);
         });

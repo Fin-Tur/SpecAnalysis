@@ -1,3 +1,60 @@
+/* Overlay für Smoothed Settings */
+.settings-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.25);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.settings-content {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+    padding: 32px 32px 24px 32px;
+    min-width: 320px;
+    max-width: 90vw;
+    color: #22223b;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+.settings-content label {
+    display: flex;
+    flex-direction: column;
+    font-size: 1em;
+    margin-bottom: 8px;
+    color: #22223b;
+    gap: 4px;
+}
+.settings-btn {
+    background: #f0efeb;
+    border: 1.5px solid #f0efeb;
+    border-radius: 50%;
+    padding: 1px 10px;
+    font-size: 1.1em;
+    color: #22223b;
+    cursor: pointer;
+    margin-left: 2px;
+    transition: background 0.2s, border 0.2s;
+}
+.settings-btn:hover {
+    background: #cbccc9;
+}
+.settings-close-btn {
+    background: #bebebe;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 22px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.settings-close-btn:hover {
+    background: #797a7a;
+}
 body {
             background: #f5f6f7;
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -82,6 +139,19 @@ body {
             box-shadow: 0 2px 12px rgba(0,0,0,0.04);
         }
         .iteration-input {
+            width: 40px;
+            height: 22px;
+            padding: 2px 6px;
+            border: 1.5px solid #bfc0c0;
+            border-radius: 8px;
+            background: #f0efeb;
+            font-size: 0.85em;
+            color: #22223b;
+            margin-left: 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            transition: border 0.2s, box-shadow 0.2s;
+        }
+        .sigma-input{
             width: 40px;
             height: 22px;
             padding: 2px 6px;
@@ -314,3 +384,12 @@ body {
     flex-wrap: wrap;
 }
 
+.algorithm-select {
+    margin-left: 10px;
+    height: 22px;
+    border-radius: 8px;
+    border: 1.5px solid #bfc0c0;
+    background: #f0efeb;
+    font-size: 0.85em;
+    color: #22223b;
+}

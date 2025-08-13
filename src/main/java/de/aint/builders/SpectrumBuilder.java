@@ -40,8 +40,12 @@ public class SpectrumBuilder {
         return new Spectrum(spec.getEnergy_per_channel(), background);
     }
 
-    public static Spectrum createSmoothedSpectrum(Spectrum spec, int window_size, int polynomial_degree, boolean eraseOutliers, int iterations) {   
+    public static Spectrum createSmoothedSpectrumUsingSG(Spectrum spec, int window_size, int polynomial_degree, boolean eraseOutliers, int iterations) {   
         return OvulationOperator.smoothSpectrum(spec, window_size, polynomial_degree, eraseOutliers, iterations);
+    }
+
+    public static Spectrum createSmoothedSpectrumUsingGauss(Spectrum spec, double sigma){
+        return OvulationOperator.smoothSpectrumUsingGauss(spec, sigma);
     }
 
     // 0 => Original Spectrum
@@ -52,7 +56,7 @@ public class SpectrumBuilder {
         //Declare Original / Smoothed Variants
         Spectrum[] variants = new Spectrum[4];
         variants[0] = spec;
-        variants[1] = createSmoothedSpectrum(spec, 11, 2, true, 1);
+        variants[1] = createSmoothedSpectrumUsingSG(spec, 11, 2, true, 1);
         //Declare Background variants
         variants[2] = createBackgroundSpectrum(spec, 2e4, 8e-4, 5);
         variants[3] = createBackgroundSpectrum(variants[1], 2e4, 8e-4, 5);

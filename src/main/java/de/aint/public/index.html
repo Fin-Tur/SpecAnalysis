@@ -34,9 +34,36 @@
                 <label class="checkbox-label">
                     <input type="checkbox" class="spectrum-checkbox" value="/smoothed" checked>
                     Smoothed
-                    <input type="number" class="iteration-input" data-endpoint="/smoothed" value="5" min="1" max="100" step="1" style="width:40px;" title="Iterations">
-                    <input type="number" class="window-input" data-endpoint="/smoothed" value="11" min="3" max="101" step="2" title="Window Size">
+                    <button id="smoothedSettingsBtn" type="button" class="settings-btn" title="Smoothed Einstellungen" style="margin-left:8px;">⚙️</button>
                 </label>
+                <!-- Smoothed Settings Overlay -->
+                <div id="smoothedSettingsOverlay" class="settings-overlay" style="display:none;">
+                    <div class="settings-content">
+                        <h3>Smoothed Einstellungen</h3>
+                        <label>Algorithmus:
+                            <select class="algorithm-select" data-endpoint="/smoothed" id="smoothedAlgorithmSelect">
+                                <option value="SG">Savitzky-Golay</option>
+                                <option value="Gauss">Gauss</option>
+                            </select>
+                        </label>
+                        <div id="sgSettings">
+                            <label>Iterationen:
+                                <input type="number" class="iteration-input" data-endpoint="/smoothed" value="5" min="1" max="100" step="1" style="width:60px;" title="Iterations">
+                            </label>
+                            <label>Window Size:
+                                <input type="number" class="window-input" data-endpoint="/smoothed" value="11" min="3" max="101" step="2" style="width:60px;" title="Window Size">
+                            </label>
+                        </div>
+                        <div id="gaussSettings" style="display:none;">
+                            <label>Sigma:
+                                <input type="number" class="sigma-input" data-endpoint="/smoothed" value="4" min="2" max="14" step="1" style="width:60px;" title="Sigma">
+                            </label>
+                        </div>
+                        <div style="margin-top:18px; text-align:right;">
+                            <button id="smoothedSettingsClose" type="button" class="settings-close-btn">OK</button>
+                        </div>
+                    </div>
+                </div>
                 <label class="checkbox-label">
                     <input type="checkbox" class="spectrum-checkbox" value="/background" checked>
                     Background

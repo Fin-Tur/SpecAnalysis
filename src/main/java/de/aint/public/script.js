@@ -9,7 +9,7 @@ const spectrumOptions = [
     { endpoint: "/", name: "Original", color: "#e63946" },
     { endpoint: "/custom", name: "Custom", color: "#aa1a92ff"},
     { endpoint: "/smoothed", name: "Geglättet", color: "#457b9d", hasIterations: true },
-    { endpoint: "/background", name: "Hintergrund", color: "#2a9d8f", hasIterations: true },
+    { endpoint: "/background", name: "Hintergrund", color: "#2a9d8f", hasIterations: false },
     { endpoint: "/smbackground", name: "SM Hintergrund", color: "#f1faee", hasIterations: false }
 ];
 
@@ -26,10 +26,33 @@ function fetchSpectrum(endpoint, iterations, windowSize, backgroundSource, custo
     }
     let url = 'http://localhost:7000' + endpoint;
     const params = [];
-    if (iterations) params.push('iterations=' + iterations);
-    if (windowSize) params.push('window_size=' + windowSize);
+    // Algorithmus ermitteln
+    let algorithm = null;
+    if (endpoint === "/smoothed") {
+        const algoSelect = document.querySelector('.algorithm-select[data-endpoint="/smoothed"]');
+        if (algoSelect) {
+            algorithm = algoSelect.value;
+            params.push('algorithm=' + encodeURIComponent(algorithm));
+        }
+    }
+    // Nur für SG: Iterationen und Window Size, für Gauss: Sigma
+    if (endpoint === "/smoothed" && algorithm === "SG") {
+        if (iterations) params.push('iterations=' + iterations);
+        if (windowSize) params.push('window_size=' + windowSize);
+    }
+    if (endpoint === "/smoothed" && algorithm === "Gauss") {
+        const sigmaInput = document.querySelector('.sigma-input[data-endpoint="/smoothed"]');
+        if (sigmaInput) params.push('sigma=' + sigmaInput.value);
+    }
     if (backgroundSource) params.push('source=' + backgroundSource);
     if (customIsotopes && customIsotopes.length > 0) params.push('isotopes=' + customIsotopes.join(','));
+    // Add algorithm parameter for /smoothed endpoint
+    if (endpoint === "/smoothed") {
+        const algoSelect = document.querySelector('.algorithm-select[data-endpoint="/smoothed"]');
+        if (algoSelect) {
+            params.push('algorithm=' + encodeURIComponent(algoSelect.value));
+        }
+    }
     if (params.length > 0) url += '?' + params.join('&');
     return fetch(url)
         .then(response => response.json())
@@ -126,13 +149,17 @@ function plotSelectedSpectra() {
                 let windowSize = null;
                 let backgroundSource = null;
                 let customIsotopes = null;
-                if (opt.hasIterations) {
-                    const input = document.querySelector(`.iteration-input[data-endpoint="${opt.endpoint}"]`);
-                    iterations = input ? input.value : null;
-                }
+                // Für SG: Iterationen und Window Size, für Gauss: Sigma
                 if (opt.endpoint === "/smoothed") {
-                    const winInput = document.querySelector(`.window-input[data-endpoint="/smoothed"]`);
-                    windowSize = winInput ? winInput.value : null;
+                    const algoSelect = document.querySelector('.algorithm-select[data-endpoint="/smoothed"]');
+                    const algorithm = algoSelect ? algoSelect.value : "SG";
+                    if (algorithm === "SG") {
+                        const input = document.querySelector(`.iteration-input[data-endpoint="/smoothed"]`);
+                        iterations = input ? input.value : null;
+                        const winInput = document.querySelector(`.window-input[data-endpoint="/smoothed"]`);
+                        windowSize = winInput ? winInput.value : null;
+                    }
+                    // Für Gauss: Iterationen und Window Size ignorieren, stattdessen sigma
                 }
                 if (opt.endpoint === "/background") {
                     const bgSource = document.querySelector('.background-source[data-endpoint="/background"]');
@@ -157,7 +184,7 @@ function plotSelectedSpectra() {
                 mode: 'lines',
                 name: r.name +
                     (r.hasIterations ? ` (Iterationen: ${document.querySelector(`.iteration-input[data-endpoint="${r.endpoint}"]`)?.value || ''})` : '') +
-                    (r.endpoint === "/smoothed" ? `, Window: ${document.querySelector('.window-input[data-endpoint="/smoothed"]').value}` : '') +
+                    (r.endpoint === "/smoothed" ? `, Window: ${document.querySelector('.window-input[data-endpoint="/smoothed"]').value}, Algo: ${document.querySelector('.algorithm-select[data-endpoint="/smoothed"]').value}` : '') +
                     (r.endpoint === "/background" ? ` (${document.querySelector('.background-source[data-endpoint="/background"]').selectedOptions[0].text})` : ''),
                 line: { color: r.color, width: 3 }
             }));
@@ -182,19 +209,48 @@ function plotSelectedSpectra() {
 // Initiales Plotten
 plotSelectedSpectra();
 
-// Event Listener für Checkboxen und Inputfelder
+// Event Listener für Checkboxen
 document.querySelectorAll('.spectrum-checkbox').forEach(cb => {
     cb.addEventListener('change', plotSelectedSpectra);
-});
-document.querySelectorAll('.iteration-input').forEach(input => {
-    input.addEventListener('input', plotSelectedSpectra);
-});
-document.querySelectorAll('.window-input').forEach(input => {
-    input.addEventListener('input', plotSelectedSpectra);
 });
 document.querySelectorAll('.background-source').forEach(input => {
     input.addEventListener('change', plotSelectedSpectra);
 });
+
+// Smoothed Settings Overlay Handling
+// Umschalten der Settings je nach Algorithmus
+const smoothedAlgorithmSelect = document.getElementById('smoothedAlgorithmSelect');
+const sgSettingsDiv = document.getElementById('sgSettings');
+const gaussSettingsDiv = document.getElementById('gaussSettings');
+if (smoothedAlgorithmSelect && sgSettingsDiv && gaussSettingsDiv) {
+    smoothedAlgorithmSelect.addEventListener('change', function() {
+        if (this.value === 'SG') {
+            sgSettingsDiv.style.display = '';
+            gaussSettingsDiv.style.display = 'none';
+        } else {
+            sgSettingsDiv.style.display = 'none';
+            gaussSettingsDiv.style.display = '';
+        }
+    });
+}
+const smoothedSettingsBtn = document.getElementById('smoothedSettingsBtn');
+const smoothedSettingsOverlay = document.getElementById('smoothedSettingsOverlay');
+const smoothedSettingsClose = document.getElementById('smoothedSettingsClose');
+if (smoothedSettingsBtn && smoothedSettingsOverlay && smoothedSettingsClose) {
+    smoothedSettingsBtn.addEventListener('click', () => {
+        smoothedSettingsOverlay.style.display = 'flex';
+    });
+    smoothedSettingsClose.addEventListener('click', () => {
+        smoothedSettingsOverlay.style.display = 'none';
+        plotSelectedSpectra();
+    });
+    // Optional: Schließen bei Klick außerhalb des Dialogs
+    smoothedSettingsOverlay.addEventListener('click', (e) => {
+        if (e.target === smoothedSettingsOverlay) {
+            smoothedSettingsOverlay.style.display = 'none';
+        }
+    });
+}
 document.getElementById('clearSelectedIsotopes').addEventListener('click', function() {
     // Alle ausgewählten Isotope zurücksetzen
     selectedIsotopeIds.clear()
