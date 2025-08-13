@@ -1,0 +1,38 @@
+stages:          # List of stages for jobs, and their order of execution
+  - build
+  - deploy
+  - analyze
+
+build-job:       # This job runs in the build stage, which runs first.
+  tags:
+    - maven
+  stage: build
+  script:
+    - mvn clean compile
+
+deploy-job:      # This job runs in the deploy stage.
+  tags: 
+    - maven
+  stage: deploy
+  script:
+    - mvn deploy
+    
+sonarqube-check:
+  tags: 
+    - maven
+  stage: analyze
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
+    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+  cache:
+    policy: pull-push
+    key: "sonar-cache-$CI_COMMIT_REF_SLUG"
+    paths:
+      - "${SONAR_USER_HOME}/cache"
+      - sonar-scanner/
+  script: 
+    - mvn verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+  allow_failure: true
+  only:
+    - newmain
+
