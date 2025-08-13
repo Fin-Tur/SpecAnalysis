@@ -1,4 +1,5 @@
 package de.aint;
+
 import de.aint.readers.IsotopeReader;
 import de.aint.readers.Reader;
 import io.javalin.Javalin;
@@ -101,7 +102,7 @@ public class Api {
                 spec = Reader.readFile(tempFile.getAbsolutePath());
                 spec.changeEnergyCal(channels, energies);
                 variants = SpectrumBuilder.createSpectrumVariants(spec);
-                tempFile.delete();
+                if(!tempFile.delete()) System.out.println("Could not delete temporary file: " + tempFile.getAbsolutePath());
                 ctx.json(spec);
             } else {
                 ctx.status(400).result("No file uploaded");
