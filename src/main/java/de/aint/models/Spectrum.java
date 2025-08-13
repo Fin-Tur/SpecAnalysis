@@ -1,0 +1,114 @@
+package de.aint.models;
+
+import java.util.*;
+import java.util.stream.IntStream;
+
+public class Spectrum {
+    
+    //Peak width increasement given by shape_cal(keV) // x^0, x^1, x^2
+    static final double[] shape_cal = {5.9735E-04, 7.6079E-04, 0.7479};
+
+    //Counts in channels oa Counts per channel(energy range)
+    private final double[] counts;
+    //Number of channels
+    private final int channel_count;
+    //Energy - channels : initialized w/ channelsToEnergy
+    private final double[] energy_per_channel;
+    //srcForce in n/s || mcnp = cpunt*this
+    private float srcForce = 1;
+
+    //Variables for channel - energy calculation
+    private double ec_offset;
+    private double ec_slope;
+    private double ec_quad;
+    //Constructor for Spe files
+    public Spectrum(double[] counts, double ec_offset, double ec_slope, double ec_quad){
+        this.channel_count = counts.length;
+        this.counts = Arrays.copyOf(counts, counts.length);
+        this.ec_offset = ec_offset;
+        this.ec_slope = ec_slope;
+        this.ec_quad = ec_quad;
+        energy_per_channel = new double[counts.length];
+        this.convertChannelsToEnergy();
+    }
+    //Overloading for mncp specs
+    public Spectrum(double[] energy, double[] counts){
+        this.channel_count = energy.length;
+        this.counts = Arrays.copyOf(counts, counts.length);
+        this.ec_offset = 0;
+        this.ec_slope = 0;
+        this.ec_quad = 0;
+        this.energy_per_channel = Arrays.copyOf(energy, energy.length);
+    }
+
+    //Function to channel data
+    private void convertChannelsToEnergy(){
+        for(int channel = 0; channel < channel_count; channel++){
+            energy_per_channel[channel] = ec_offset + ec_slope*(channel) + ec_quad*(channel*channel);
+        }
+    }
+
+    //Function to normalize cnts
+    public void normalizeCounts(){
+        if(srcForce == 1) return;
+        IntStream.range(0,this.counts.length).forEach(i -> this.counts[i]*=this.srcForce);
+    }
+
+    //Func to change energy calibration
+    /*public void changeEnergyCal(int channel1, double energy1, int channel2, double energy2){
+
+        double slope = (energy2-energy1) / (channel2-channel1);
+        double offset = energy1 - slope*channel1;
+
+        this.ec_offset = offset;
+        this.ec_slope = slope;
+        this.convertChannelsToEnergy();
+    }*/
+
+    public void changeEnergyCal(int[] channels, double[] energies) {
+    if (channels.length != energies.length || channels.length < 2) {
+        throw new IllegalArgumentException("Mindestens zwei (channel, energy)-Paare erforderlich");
+    }
+
+    int n = channels.length;
+    double sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+
+    // Summen für lineare Regression berechnen
+    for (int i = 0; i < n; i++) {
+        sumX  += channels[i];
+        sumY  += energies[i];
+        sumXY += channels[i] * energies[i];
+        sumX2 += channels[i] * channels[i];
+    }
+
+    // Steigung und Offset berechnen (y = slope * x + offset)
+    double slope  = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    double offset = (sumY - slope * sumX) / n;
+
+    this.ec_offset = offset;
+    this.ec_slope = slope;
+    this.convertChannelsToEnergy();
+}
+
+
+
+    public void setSrcForce(float cntMult){
+        this.srcForce = cntMult;
+    }
+
+    public float getSrcForce(){
+        return this.srcForce;
+    }
+
+    public double[] getCounts(){
+        return this.counts;
+    }
+
+    public double[] getEnergy_per_channel() {
+        return energy_per_channel;
+    }
+
+    public int getChannel_count(){
+        return this.counts.length;
+    }
+}
