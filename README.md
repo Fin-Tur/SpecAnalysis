@@ -8,7 +8,7 @@ SpecAnalysis is a web-based gamma spectrum analysis tool designed for isotope id
 
 - **Isotope Identification**
   - Automatic detection and assignment of isotopes based on their characteristic energies (keV).
-  - Support for manual isotope selection to identify unknown peaks.
+  - Support for manual isotope selection to identify unknown peaks (custom Spectrum).
 
 - **Spectrum Visualization**
   - Browser-based interactive plots.
@@ -16,7 +16,7 @@ SpecAnalysis is a web-based gamma spectrum analysis tool designed for isotope id
   - Counts vs. Energy (keV) displayed in logarithmic or linear scale.
 
 - **Signal Processing**
-  - Background noise fitting using various industry-standard algorithms (e.g ALS, arpLS).
+  - Background noise fitting using various industry-standard algorithms using own C++ lib for faster usage (e.g ALS, arpLS).
   - Spectrum smoothing with adjustable parameters (e.g Savitzky-Golay, Gauss).
   - Custom graphs with selected isotopes for detailed analysis.
 
