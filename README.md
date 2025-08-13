@@ -16,8 +16,8 @@ SpecAnalysis is a web-based gamma spectrum analysis tool designed for isotope id
   - Counts vs. Energy (keV) displayed in logarithmic or linear scale.
 
 - **Signal Processing**
-  - Background noise fitting using various industry-standard algorithms.
-  - Spectrum smoothing with adjustable parameters.
+  - Background noise fitting using various industry-standard algorithms (e.g ALS, arpLS).
+  - Spectrum smoothing with adjustable parameters (e.g Savitzky-Golay, Gauss).
   - Custom graphs with selected isotopes for detailed analysis.
 
 - **File Format Support**
@@ -44,7 +44,11 @@ SpecAnalysis is a web-based gamma spectrum analysis tool designed for isotope id
 ## Screenshots
 
 ### Plot View
-<img width="1206" height="912" alt="PlotDisplay" src="https://github.com/user-attachments/assets/9d498f22-4170-491e-94c6-436851fa1878" />
+<img width="1226" height="913" alt="ORgininalNew" src="https://github.com/user-attachments/assets/8af7b9c6-120b-4c3b-a605-36a45a63a573" />
+
+
+### Smoothing Options
+<img width="1213" height="898" alt="SmoothSettings" src="https://github.com/user-attachments/assets/00fa7a77-e29b-49eb-a815-21ce8cfdc0be" />
 
 
 ### Custom Graph with Isotope Selection
