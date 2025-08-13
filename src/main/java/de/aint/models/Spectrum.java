@@ -67,21 +67,22 @@ public class Spectrum {
 
     public void changeEnergyCal(int[] channels, double[] energies) {
     if (channels.length != energies.length || channels.length < 2) {
-        throw new IllegalArgumentException("Mindestens zwei (channel, energy)-Paare erforderlich");
+        throw new IllegalArgumentException("At least two energy channel pairs required.");
     }
 
     int n = channels.length;
     double sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
 
-    // Summen für lineare Regression berechnen
+    //Sums for linear Regression
     for (int i = 0; i < n; i++) {
         sumX  += channels[i];
         sumY  += energies[i];
         sumXY += channels[i] * energies[i];
         sumX2 += channels[i] * channels[i];
     }
-
-    // Steigung und Offset berechnen (y = slope * x + offset)
+    if (n * sumX2 - sumX * sumX == 0) {
+        throw new IllegalArgumentException("Invalid channel/energy pairs.");
+    }
     double slope  = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
     double offset = (sumY - slope * sumX) / n;
 
