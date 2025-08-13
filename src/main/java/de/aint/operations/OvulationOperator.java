@@ -212,12 +212,16 @@ public class OvulationOperator {
                 }
                 stdNeg = Math.sqrt(stdNeg / countNeg);
             }
-            //Initialize new weughts
+            //Initialize new weights
+            //If stdNeg is 0, it means no negative values, so we can skip weight calculation
             double[] newWeights = new double[cntLen];
-            for (int i = 0; i < cntLen; i++) {
-                //If the difference is negative it means the count is below the background, so we increase the weight
-                //oppsoite for positive values
-                newWeights[i] = 1.0 / (1.0 + Math.exp(2.0 * (differenceCountsToBackground[i] - (2 * stdNeg - meanNeg)) / stdNeg));
+            if (stdNeg == 0) { newWeights = Arrays.copyOf(weights, weights.length); }
+            else {
+                for (int i = 0; i < cntLen; i++) {
+                    //If the difference is negative it means the count is below the background, so we increase the weight
+                    //oppsoite for positive values
+                    newWeights[i] = 1.0 / (1.0 + Math.exp(2.0 * (differenceCountsToBackground[i] - (2 * stdNeg - meanNeg)) / stdNeg));
+                }
             }
             //Check breakoff term : if values of weights do not change significantly, we can stop iterating
             double diff = 0.0;
