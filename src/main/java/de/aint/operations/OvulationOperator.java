@@ -76,12 +76,55 @@ public class OvulationOperator {
         return weights;
     }
 
-    //Gauss Ovulation
-    public static Spectrum smoothSpectrumUsingGauss(Spectrum spec, double sigma){
-        double[] counts = spec.getCounts();
-        
+    //Create Gauss Kernel
+    private static double[] createGaussKernel(double sigma, int kernelSize) {
+        double[] kernel = new double[kernelSize];
+        double sum = 0.0;
+        for (int i = 0; i < kernelSize; i++) {
+            double x = i - kernelSize / 2;
+            kernel[i] = Math.exp(-(x * x) / (2 * sigma * sigma));
+            sum += kernel[i];
+        }
+        //Normalize the kernel
+        for (int i = 0; i < kernelSize; i++) {
+            kernel[i] /= sum;
+        }
+        return kernel;
+    }
 
-        return null;
+    //Mirror index / for windows overlapping channel size ( < 0, > channel.size )
+    private static int mirrorIndex(int index, int size) {
+        if (index < 0) {
+            return -index - 1;
+        } else if (index >= size) {
+            return 2 * size - index -1; 
+        }
+        return index;
+    }
+
+
+    //Gauss Smoothing
+    public static Spectrum smoothSpectrumUsingGauss(Spectrum spec, double sigma){
+        if(sigma <= 0) {
+            return spec;
+        }
+        int radius = (int) Math.ceil(3 * sigma);
+        int windowSize = 2 * radius + 1;
+
+        double[] counts = spec.getCounts();
+        double[] newCounts = new double[counts.length];
+        double[] kernel = createGaussKernel(sigma, windowSize);
+
+        for(int i = 0; i < counts.length; i++){
+            double smoothedValue = 0.0;
+            for(int j = i-radius; j <= i+radius; j++){
+                int index = mirrorIndex(j, counts.length);
+                smoothedValue += counts[index] * kernel[j - (i-radius)];
+            }
+            newCounts[i] = smoothedValue;
+        }
+
+        return new Spectrum(spec.getEnergy_per_channel(), newCounts);
     }
 
 
