@@ -8,7 +8,25 @@
     <artifactId>SpecAnalysis</artifactId>
     <version>1.0-SNAPSHOT</version>
 
+    <repositories>
+        <repository>
+                <id>Peak</id>
+                <name>Peak Maven Repo</name>
+                <url>http://10.14.0.54:8080/repository/Peak/</url>
+                <releases>
+                    <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                    <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>    
+
     <properties>
+        <sonar.projectKey>peak-tools_specanalysis_30d7acda-fb0f-4c89-98b5-b5eb9728a3da</sonar.projectKey>
+        <sonar.projectName>SpecAnalysis</sonar.projectName>
+        <sonar.qualitygate.wait>true</sonar.qualitygate.wait>
+
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -42,6 +60,19 @@
         </dependency>
 
     </dependencies>
+
+        <distributionManagement>
+        <repository>
+            <id>Peak</id>
+            <name>Peak Maven Repo</name>
+            <url>http://10.14.0.54:8080/repository/Peak/</url>
+        </repository>
+        <snapshotRepository>
+            <id>Peak</id>
+            <url>http://10.14.0.54:8080/repository/Peak/</url>
+        </snapshotRepository>
+    </distributionManagement>
+
 
 
 </project>
