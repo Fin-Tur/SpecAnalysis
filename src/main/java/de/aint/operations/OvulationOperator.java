@@ -81,11 +81,12 @@ public class OvulationOperator {
         double[] kernel = new double[kernelSize];
         double sum = 0.0;
         for (int i = 0; i < kernelSize; i++) {
-            double x = i - kernelSize / 2;
+            double x = i - ((double) kernelSize / 2);
             kernel[i] = Math.exp(-(x * x) / (2 * sigma * sigma));
             sum += kernel[i];
         }
         //Normalize the kernel
+        if(sum == 0) sum = 1; // Avoid division by zero
         for (int i = 0; i < kernelSize; i++) {
             kernel[i] /= sum;
         }
