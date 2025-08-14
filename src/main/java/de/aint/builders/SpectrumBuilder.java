@@ -70,6 +70,7 @@ public class SpectrumBuilder {
 
         for (ROI peak : peaks) {
             double[] fit = CurveFitter.fitGaussCurveToRoi(peak);
+            System.out.println(fit[0]);
             //Gather start and end energy and add 5 to smoothe out harsh curves
             int startPoint = Helper.findChannelFromEnergy(peak.getStartEnergy(), spec.getEnergy_per_channel())-5;
             int endPoint = Helper.findChannelFromEnergy(peak.getEndEnergy(), spec.getEnergy_per_channel())+5;

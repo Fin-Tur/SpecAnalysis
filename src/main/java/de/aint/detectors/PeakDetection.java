@@ -43,6 +43,14 @@ public class PeakDetection {
         //Return peaks
         return peaks.toArray(new ROI[0]);
     }
+ 
+    public static ROI[] detectPeaksUsingSecondDerivative(Spectrum spec, Spectrum background) {
+    
+
+        return null; 
+
+    }
+
 
     /*
      * Calculate the endpoint of a peak in a spectrum.
@@ -91,8 +99,17 @@ public class PeakDetection {
         roi.setStartEnergy(roi.getSpectrum().getEnergy_per_channel()[startChannel]);
         roi.setEndEnergy(roi.getSpectrum().getEnergy_per_channel()[endChannel]);
 
-        //System.out.println("Peak start: " + roi.getStartEnergy() + ", end: " + roi.getEndEnergy());
-
     }
 
+    public static void detectAndSetPeakSizeUsingFWHM(ROI roi, double multiplicator) {
+        final double FWHM = roi.getSpectrum().getFwhmForNumber(Helper.findChannelFromEnergy(roi.getPeakCenter(), roi.getSpectrum().getEnergy_per_channel()))*multiplicator;
+
+        double startEnergy = Math.max(roi.getPeakCenter() - FWHM / 2, 0);
+        double endEnergy = Math.min(roi.getPeakCenter() + FWHM / 2, roi.getSpectrum().getEnergy_per_channel()[roi.getSpectrum().getChannel_count() - 1]);
+        System.out.println("FWHM Peak start: " + startEnergy + ", end: " + endEnergy + " FWHM: " + FWHM);
+        roi.setStartEnergy(startEnergy);
+        roi.setEndEnergy(endEnergy);
+
+    }
 }
+

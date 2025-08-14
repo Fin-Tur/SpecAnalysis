@@ -20,9 +20,20 @@ public abstract class CurveFitter {
                 obs.add(i, counts[i]);
             }
         }
-        GaussianCurveFitter fitter = GaussianCurveFitter.create();
+        GaussianCurveFitter fitter = GaussianCurveFitter.create().withMaxIterations(100000);
         // Fit the Gaussian curve to the observed points
-        return fitter.fit(obs.toList());
+        System.out.println("Fitting Gaussian curve " + roi.getPeakCenter());
+        double[] gaussParams = {0, roi.getPeakCenter(), 1};
+
+        try{
+            gaussParams = fitter.fit(obs.toList());
+        }catch(Exception e){
+            System.err.println("Error fitting Gaussian curve: " + e.getMessage());
+        }
+           
+        
+
+        return gaussParams;
     }
 
 

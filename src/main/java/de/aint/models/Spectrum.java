@@ -6,7 +6,7 @@ import java.util.stream.IntStream;
 public class Spectrum {
     
     //Peak width increasement given by shape_cal(keV) // x^0, x^1, x^2
-    static final double[] shape_cal = {5.9735E-04, 7.6079E-04, 0.7479};
+    static final double[] shape_cal = {1.14618E-3, 7.58067E-3, 4.98421E-7};
 
     //Counts in channels oa Counts per channel(energy range)
     private final double[] counts;
@@ -111,5 +111,9 @@ public class Spectrum {
 
     public int getChannel_count(){
         return this.channel_count;
+    }
+
+    public double getFwhmForNumber(int channel){
+        return shape_cal[0] + shape_cal[1] * channel + shape_cal[2] * channel * channel;
     }
 }
