@@ -9,7 +9,6 @@ import de.aint.libraries.*;
 
 public class SpectrumBuilder {
     public static Spectrum createCustomSpectrum(Spectrum spectrum, ArrayList<String> selectedIsotopesAsIDString, IsotopeReader isotopeReader) {
-        //gather selected Isotopes
         ArrayList<Isotop> isotopes = isotopeReader.isotopes;
         Isotop[] selectedIsos = isotopes.stream().filter(iso -> selectedIsotopesAsIDString.contains(iso.id)).toArray(Isotop[]::new);
 
@@ -64,5 +63,31 @@ public class SpectrumBuilder {
         return variants;
     }
 
+    public static Spectrum createPeakFitSpectrum(Spectrum spec, ROI[] peaks) {
+
+        double[] counts = Arrays.copyOf(spec.getCounts(), spec.getCounts().length);
+        boolean[] isPeak = new boolean[counts.length];
+
+        for (ROI peak : peaks) {
+            double[] fit = CurveFitter.fitGaussCurveToRoi(peak);
+            //Gather start and end energy and add 5 to smoothe out harsh curves
+            int startPoint = Helper.findChannelFromEnergy(peak.getStartEnergy(), spec.getEnergy_per_channel())-5;
+            int endPoint = Helper.findChannelFromEnergy(peak.getEndEnergy(), spec.getEnergy_per_channel())+5;
+
+            if(startPoint<0) startPoint = 0;
+            if(endPoint>=counts.length) endPoint = counts.length-1; 
+            // Apply the Gaussian fit to the counts
+            for (int i = startPoint; i < endPoint; i++) {
+                if(isPeak[i]){
+                    double contribution = fit[0] * Math.exp(-0.5 * Math.pow((i - fit[1]) / fit[2], 2));
+                    counts[i] = (counts[i] + contribution)/2;
+                }else{
+                    counts[i] += fit[0] * Math.exp(-0.5 * Math.pow((i - fit[1]) / fit[2], 2));
+                    isPeak[i] = true;
+                }
+            }
+        }
+        return new Spectrum(spec.getEnergy_per_channel(), counts);
+    }
 
     }

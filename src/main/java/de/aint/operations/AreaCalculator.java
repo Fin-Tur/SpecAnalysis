@@ -1,6 +1,7 @@
 package de.aint.operations;
 
-import de.aint.models.Spectrum;
+import de.aint.models.*;
+import de.aint.builders.CurveFitter;
 
 public class AreaCalculator {
     
@@ -26,5 +27,20 @@ public class AreaCalculator {
         }
         return area; //Return Area
     }
+
     
+    public static double calculateAreaUsingGauss(ROI roi) {
+
+        double[] params = CurveFitter.fitGaussCurveToRoi(roi);
+
+        // The area under the Gaussian is given by the formula:
+        // Area = A * sqrt(2 * pi) * sigma
+        double amplitude = params[0];
+        double mean = params[1];
+        double sigma = params[2];
+
+        //Returns Area
+        return amplitude * Math.sqrt(2 * Math.PI) * sigma;
+
+    }
 }

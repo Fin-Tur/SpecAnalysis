@@ -99,8 +99,9 @@ public class OvulationOperator {
             return -index - 1;
         } else if (index >= size) {
             return 2 * size - index -1; 
+        }else{
+            return index;
         }
-        return index;
     }
 
 

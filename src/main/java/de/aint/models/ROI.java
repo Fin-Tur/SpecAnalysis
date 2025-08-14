@@ -1,11 +1,12 @@
 package de.aint.models;
+import de.aint.detectors.PeakDetection;
 import de.aint.operations.AreaCalculator;
 
 public class ROI {
 
     private final Spectrum spectrum;
-    private final double startEnergy;
-    private final double endEnergy;
+    private double startEnergy;
+    private double endEnergy;
     private final double peakCenter;
 
     private double areaOverBackground;
@@ -39,6 +40,13 @@ public class ROI {
     }
 
     //Setter
+    public void setStartEnergy(double startEnergy) {
+        this.startEnergy = startEnergy;
+    }
+    public void setEndEnergy(double endEnergy) {
+        this.endEnergy = endEnergy;
+    }
+
     public void setAreaOverBackground() {
         this.areaOverBackground = AreaCalculator.calculateAreaOverBackground(this.spectrum, this.startEnergy, this.endEnergy);
     }
@@ -53,15 +61,17 @@ public class ROI {
     }
 
     //Constructor for a Region of Interest (ROI) in a Spectrum
+    public ROI(Spectrum spec, double peakCenter) {
+        this.spectrum = spec;
+        this.peakCenter = peakCenter;
+        PeakDetection.detectAndSetPeakSize(this, 4);
+    }
+
     public ROI(Spectrum spec, double startEnergy, double endEnergy, double peakCenter) {
         this.spectrum = spec;
         this.startEnergy = startEnergy;
         this.endEnergy = endEnergy;
         this.peakCenter = peakCenter;
-
-
     }
-
-
 
 }

@@ -27,8 +27,8 @@ public class PeakDetection {
                 if(counts[i] > counts[i - 1] && counts[i] > counts[i + 1] && counts[i] > treshhold && energy[i] < 10000) {
                     // Found a peak
                     ////System.out.println("Found peak at " + smoothed.getEnergy_per_channel()[i] + " channel " + i + " with intensity " + counts[i]);
-                    System.out.printf("%f\t%f\t%d\t%f\n", smoothed.getEnergy_per_channel()[i], counts[i], i, treshhold);
-                    peaks.add(new ROI(spec, energy[i], energy[i], energy[i]));
+                    //System.out.printf("%f\t%f\t%d\t%f\n", smoothed.getEnergy_per_channel()[i], counts[i], i, treshhold);
+                    peaks.add(new ROI(spec, energy[i]));
                 }
             }
 
@@ -37,11 +37,62 @@ public class PeakDetection {
         for(ROI roi : peaks) {
             Isotop matchedIso = MatchRoiWithIsotop.matchRoiWithIsotop(roi, isotopeReader, 1);
             roi.setEstimatedIsotope(matchedIso);
-            //System.out.println("Isotop matched!");
             
         }
+
         //Return peaks
         return peaks.toArray(new ROI[0]);
+    }
+
+    /*
+     * Calculate the endpoint of a peak in a spectrum.
+     * @Params
+     * dir = Direction of the search (+ for right, - for left, value is window size) Warning: dir will be used for window adaptation through incrementing and returned
+     * treshhold = counts/channel (good estimated value is at 5-10% of peak intensity)
+     * maxSpan = Maximum span to search for peak endpoint
+     */
+    private static int calculatePeakEndpoint(double[] counts, int peakCenter, int dir, double threshold, int maxSpan){
+
+        double gradient = Double.MAX_VALUE;
+        int base = peakCenter;
+
+        for(int i = 0; i < maxSpan; i++) {
+            int x1 = peakCenter + dir;
+            int x2 = base;
+
+            //Endpoint of spectrum reached, return last possible endpoint
+            if(x1 < 0 || x1 >= counts.length) {
+                return x1 < 0 ? 0 : counts.length - 1;
+            }
+            //No gradient, make window bigger
+            if(!(x2 - x1 == 0)){
+                gradient = Math.abs(counts[x2] - counts[x1]) / (Math.abs(x2 - x1));
+            }
+
+            if(gradient <= threshold){
+                return x1;
+            }
+           
+            dir = dir > 0 ? dir + 1 : dir - 1;
+            base = dir > 0 ? base + 1 : base - 1;
+        }
+
+        return peakCenter + dir;
+
+    }
+
+    public static void detectAndSetPeakSize(ROI roi, int windowSize) {
+        int peakCenter = Helper.findChannelFromEnergy(roi.getPeakCenter(), roi.getSpectrum().getEnergy_per_channel());
+        double peakHeight = roi.getSpectrum().getCounts()[peakCenter];
+
+        int startChannel = calculatePeakEndpoint(roi.getSpectrum().getCounts(), peakCenter, -windowSize, peakHeight * 0.05, 30);
+        int endChannel = calculatePeakEndpoint(roi.getSpectrum().getCounts(), peakCenter, windowSize, peakHeight * 0.05, 30);
+
+        roi.setStartEnergy(roi.getSpectrum().getEnergy_per_channel()[startChannel]);
+        roi.setEndEnergy(roi.getSpectrum().getEnergy_per_channel()[endChannel]);
+
+        //System.out.println("Peak start: " + roi.getStartEnergy() + ", end: " + roi.getEndEnergy());
+
     }
 
 }
