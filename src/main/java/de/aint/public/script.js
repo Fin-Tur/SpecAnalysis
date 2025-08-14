@@ -13,7 +13,7 @@ const spectrumOptions = [
     { endpoint: "/smbackground", name: "SM Hintergrund", color: "#f1faee", hasIterations: false }
 ];
 
-function fetchSpectrum(endpoint, iterations, windowSize, backgroundSource, customIsotopes) {
+function fetchSpectrum(endpoint, iterations, windowSize, backgroundSource, customSource, customIsotopes) {
     if (endpoint === "/" && window.selectedFile) {
         // File-Upload for Original
         const formData = new FormData();
@@ -46,6 +46,7 @@ function fetchSpectrum(endpoint, iterations, windowSize, backgroundSource, custo
     }
     if (backgroundSource) params.push('source=' + backgroundSource);
     if (customIsotopes && customIsotopes.length > 0) params.push('isotopes=' + customIsotopes.join(','));
+    if (customSource) params.push('source=' + customSource);
     // Add algorithm parameter for /smoothed endpoint
     if (endpoint === "/smoothed") {
         const algoSelect = document.querySelector('.algorithm-select[data-endpoint="/smoothed"]');
@@ -165,11 +166,17 @@ function plotSelectedSpectra() {
                     const bgSource = document.querySelector('.background-source[data-endpoint="/background"]');
                     backgroundSource = bgSource ? bgSource.value : null;
                 }
+                let customSource = null;
                 if (opt.endpoint === "/custom") {
                     // IDs der ausgewählten Isotope aus dem Set nehmen
                     customIsotopes = Array.from(selectedIsotopeIds);
+                    // Source aus dem Select neben Custom holen
+                    const customSourceSelect = document.querySelector('.custom-source[data-endpoint="/custom"]');
+                    if (customSourceSelect) {
+                        customSource = customSourceSelect.value;
+                    }
                 }
-                return fetchSpectrum(opt.endpoint, iterations, windowSize, backgroundSource, customIsotopes).then(data => ({
+                return fetchSpectrum(opt.endpoint, iterations, windowSize, backgroundSource, customSource, customIsotopes).then(data => ({
                     ...opt,
                     data
                 }));

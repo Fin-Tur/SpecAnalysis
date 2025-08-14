@@ -80,7 +80,8 @@ public class SpectrumBuilder {
             for (int i = startPoint; i < endPoint; i++) {
                 if(isPeak[i]){
                     double contribution = fit[0] * Math.exp(-0.5 * Math.pow((i - fit[1]) / fit[2], 2));
-                    counts[i] = (counts[i] + contribution)/2;
+                    //counts[i] = (counts[i] + contribution)/2;
+                    counts[i] = Math.max(counts[i], contribution); // Keep the maximum value
                 }else{
                     counts[i] += fit[0] * Math.exp(-0.5 * Math.pow((i - fit[1]) / fit[2], 2));
                     isPeak[i] = true;

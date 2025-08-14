@@ -87,12 +87,16 @@ public class Api {
                     selectedIsotopes.add(id.trim());
                 }
             }
-            //Spectrum customSpectrum = SpectrumBuilder.createCustomSpectrum(variants[3], selectedIsotopes, isotopeReader);
+            String source = ctx.queryParamAsClass("source", String.class).getOrDefault("custom");
+            Spectrum customSpectrum = null;
 
-            //Test Deploy Spectra
-            ROI[] peaks = PeakDetection.detectPeaks(variants[0], variants[3]);
-            Spectrum customSpectrum = SpectrumBuilder.createPeakFitSpectrum(variants[3], peaks);
-
+            if(source.equals("isotopes")){
+                customSpectrum = SpectrumBuilder.createCustomSpectrum(variants[3], selectedIsotopes, isotopeReader);
+            }else if(source.equals("peaks")){
+                ROI[] peaks = PeakDetection.detectPeaks(variants[0], variants[3]);
+                customSpectrum = SpectrumBuilder.createPeakFitSpectrum(variants[3], peaks);
+            }
+           
             ctx.json(customSpectrum);
         });
 
