@@ -27,6 +27,7 @@ public abstract class Fitter {
  interface FitAlgo {
     double[] fit(FittingData data);
 }
+
 //INTERFACE FOR PEAK-FITTING ALGORITHMS
 interface PeakFitAlgo {
     double[] fit(ROI roi);

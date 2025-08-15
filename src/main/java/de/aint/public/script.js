@@ -13,7 +13,7 @@ const spectrumOptions = [
     { endpoint: "/smbackground", name: "SM Hintergrund", color: "#f1faee", hasIterations: false }
 ];
 
-function fetchSpectrum(endpoint, iterations, windowSize, sigma,backgroundSource, customSource, customIsotopes) {
+function fetchSpectrum(endpoint, iterations, windowSize, sigma, backgroundSource, customSource, customIsotopes) {
     if (endpoint === "/" && window.selectedFile) {
         // File-Upload for Original
         const formData = new FormData();
@@ -41,8 +41,8 @@ function fetchSpectrum(endpoint, iterations, windowSize, sigma,backgroundSource,
         if (windowSize) params.push('window_size=' + windowSize);
     }
     if (endpoint === "/smoothed" && algorithm === "Gauss") {
-        const sigmaInput = document.querySelector('.sigma-input[data-endpoint="/smoothed"]');
-        if (sigmaInput) params.push('sigma=' + sigmaInput.value);
+        sigma = document.querySelector('.sigma-input[data-endpoint="/smoothed"]');
+        if (sigma) params.push('sigma=' + sigma.value);
     }
     if (backgroundSource) params.push('source=' + backgroundSource);
     if (customIsotopes && customIsotopes.length > 0) params.push('isotopes=' + customIsotopes.join(','));
