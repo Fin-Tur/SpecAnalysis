@@ -1,6 +1,7 @@
-package de.aint.operations;
+package de.aint.operations.calculators;
 
 import de.aint.models.Spectrum;
+import de.aint.operations.Helper;
 
 import java.util.Arrays;
 import java.util.stream.IntStream;

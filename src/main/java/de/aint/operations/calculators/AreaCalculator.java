@@ -1,14 +1,15 @@
-package de.aint.operations;
+package de.aint.operations.calculators;
 
 import de.aint.models.*;
-import de.aint.builders.CurveFitter;
+import de.aint.operations.Helper;
+import de.aint.operations.fitters.*;
 
 public class AreaCalculator {
     
     public static double calculateAreaOverBackground(Spectrum spectrum, double startEnergy, double endEnergy) {
 
         //Calculate Background using ALS    
-        double[] estimatedBackground = OvulationOperator.estimateBackgroundUsingALS(spectrum, 2e4, 8e-4, 50);
+        double[] estimatedBackground = Fitter.BackgroundFitAlgos.ALS_FAST.fit(new FittingData(spectrum));
         Spectrum backgroundSpectrum = new Spectrum(spectrum.getEnergy_per_channel(), estimatedBackground);
         //Substract Background from Spectrum
         Spectrum cleanedSpectrum = SubstractOperator.substract(spectrum, backgroundSpectrum, spectrum.getChannel_count());
@@ -31,7 +32,7 @@ public class AreaCalculator {
     
     public static double calculateAreaUsingGauss(ROI roi) {
 
-        double[] params = CurveFitter.fitGaussCurveToRoi(roi);
+        double[] params = Fitter.PeakFitAlgos.GAUSS.fit(roi);
 
         // The area under the Gaussian is given by the formula:
         // Area = A * sqrt(2 * pi) * sigma

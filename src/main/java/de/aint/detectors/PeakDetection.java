@@ -1,7 +1,9 @@
 package de.aint.detectors;
 
+import de.aint.builders.SpectrumBuilder;
 import de.aint.models.*;
 import de.aint.operations.*;
+import de.aint.operations.calculators.SubstractOperator;
 import de.aint.readers.IsotopeReader;
 
 import java.util.ArrayList;
@@ -12,7 +14,7 @@ public class PeakDetection {
     public static ROI[] detectPeaks(Spectrum spec, Spectrum background){
 
             ArrayList<ROI> peaks = new ArrayList<>();
-            Spectrum smoothed = OvulationOperator.smoothSpectrum(spec, 11, 2, true, 1);
+            Spectrum smoothed = SpectrumBuilder.createSmoothedSpectrumUsingSG(spec, 0, 0, false, 0);
 
             Spectrum clearedSpectrum = SubstractOperator.substract(smoothed, background, smoothed.getChannel_count());
 

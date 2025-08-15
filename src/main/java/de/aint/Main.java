@@ -3,9 +3,8 @@ package de.aint;
 
 import de.aint.detectors.PeakDetection;
 import de.aint.models.*;
-import de.aint.operations.AddOperator;
-import de.aint.operations.OvulationOperator;
-import de.aint.operations.SubstractOperator;
+import de.aint.operations.calculators.AddOperator;
+import de.aint.operations.calculators.SubstractOperator;
 import de.aint.readers.Reader;
 import de.aint.builders.*;
 
@@ -14,8 +13,8 @@ public class Main {
 
         Spectrum spec1 = Reader.readFile("C:/Users/f.willems/IdeaProjects/SpecAnalysis/src/main/resources/Leere_Kammer_85_40_50_1000_930_p_8k.Spe");
         //spec1.changeEnergyCal(1677, 2223.248, 391, 511);
-        Spectrum smooth = OvulationOperator.smoothSpectrum(spec1, 11, 2, true, 1);
-        Spectrum bckgroundsmt = SpectrumBuilder.createBackgroundSpectrum(smooth, 2e4, 8e-4, 5);
+        Spectrum smooth = SpectrumBuilder.createSmoothedSpectrumUsingSG(spec1, 0, 0, false, 0);
+        Spectrum bckgroundsmt = SpectrumBuilder.createBackgroundSpectrum(spec1);
 
     
 

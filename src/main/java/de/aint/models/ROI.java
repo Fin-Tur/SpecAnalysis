@@ -1,6 +1,6 @@
 package de.aint.models;
 import de.aint.detectors.PeakDetection;
-import de.aint.operations.AreaCalculator;
+import de.aint.operations.calculators.AreaCalculator;
 
 public class ROI {
 
@@ -64,8 +64,9 @@ public class ROI {
     public ROI(Spectrum spec, double peakCenter) {
         this.spectrum = spec;
         this.peakCenter = peakCenter;
+
         PeakDetection.detectAndSetPeakSize(this, 3);
-        //PeakDetection.detectAndSetPeakSizeUsingFWHM(this, 3);
+        //PeakDetection.detectAndSetPeakSizeUsingFWHM(this, 1);
     }
     //Overload Constructor for full control
     public ROI(Spectrum spec, double startEnergy, double endEnergy, double peakCenter) {
