@@ -13,7 +13,7 @@ const spectrumOptions = [
     { endpoint: "/smbackground", name: "SM Hintergrund", color: "#f1faee", hasIterations: false }
 ];
 
-function fetchSpectrum(endpoint, iterations, windowSize, backgroundSource, customSource, customIsotopes) {
+function fetchSpectrum(endpoint, iterations, windowSize, sigma,backgroundSource, customSource, customIsotopes) {
     if (endpoint === "/" && window.selectedFile) {
         // File-Upload for Original
         const formData = new FormData();
