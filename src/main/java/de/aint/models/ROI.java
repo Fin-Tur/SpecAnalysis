@@ -1,6 +1,7 @@
 package de.aint.models;
 import de.aint.detectors.PeakDetection;
-import de.aint.operations.calculators.AreaCalculator;
+import de.aint.operations.calculators.Calculator;
+import de.aint.operations.calculators.CalculatorData;
 
 public class ROI {
 
@@ -48,7 +49,8 @@ public class ROI {
     }
 
     public void setAreaOverBackground() {
-        this.areaOverBackground = AreaCalculator.calculateAreaOverBackground(this.spectrum, this.startEnergy, this.endEnergy);
+        CalculatorData data = new CalculatorData(CalculatorData.OperationType.AREA, this);
+        this.areaOverBackground = Calculator.AreaAlgos.GAUSS.calculateArea(data);
     }
 
     public void setEstimatedIsotope(Isotop isotope) {

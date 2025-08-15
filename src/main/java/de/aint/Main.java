@@ -3,8 +3,6 @@ package de.aint;
 
 import de.aint.detectors.PeakDetection;
 import de.aint.models.*;
-import de.aint.operations.calculators.AddOperator;
-import de.aint.operations.calculators.SubstractOperator;
 import de.aint.readers.Reader;
 import de.aint.builders.*;
 
