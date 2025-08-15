@@ -1,8 +1,6 @@
 package de.aint.models;
 import de.aint.detectors.PeakDetection;
 import de.aint.operations.calculators.Calculator;
-import de.aint.operations.calculators.CalculatorData;
-
 public class ROI {
 
     private final Spectrum spectrum;
@@ -49,8 +47,7 @@ public class ROI {
     }
 
     public void setAreaOverBackground() {
-        CalculatorData data = new CalculatorData(CalculatorData.OperationType.AREA, this);
-        this.areaOverBackground = Calculator.AreaAlgos.GAUSS.calculateArea(data);
+        this.areaOverBackground = Calculator.AreaAlgos.GAUSS.calculateArea(this);
     }
 
     public void setEstimatedIsotope(Isotop isotope) {

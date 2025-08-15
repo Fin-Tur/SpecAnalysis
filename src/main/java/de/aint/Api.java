@@ -50,14 +50,15 @@ public class Api {
         app.get("/", ctx -> ctx.json(spec));
 
         app.get("/smoothed", ctx -> {
-            int iterations = ctx.queryParamAsClass("iterations", Integer.class).getOrDefault(1);
-            int windowSize = ctx.queryParamAsClass("window_size", Integer.class).getOrDefault(11);
+            int iterations = ctx.queryParamAsClass("iterations", Integer.class).getOrDefault(0);
+            int windowSize = ctx.queryParamAsClass("window_size", Integer.class).getOrDefault(0);
+            int sigma = ctx.queryParamAsClass("sigma", Integer.class).getOrDefault(0);
             String algorithm = ctx.queryParamAsClass("algorithm", String.class).getOrDefault("SG");
             Spectrum smoothed;
             if ("SG".equalsIgnoreCase(algorithm)) {
                 smoothed = SpectrumBuilder.createSmoothedSpectrumUsingSG(spec, windowSize, 2, true, iterations);
             } else {
-                smoothed = SpectrumBuilder.createSmoothedSpectrumUsingGauss(spec, 4);
+                smoothed = SpectrumBuilder.createSmoothedSpectrumUsingGauss(spec, sigma);
             }
             
             ctx.json(smoothed);

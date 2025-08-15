@@ -76,7 +76,7 @@ public abstract class SpectrumBuilder {
         if(polynomial_degree != 0){
             data.setSgPolynomialDegree(polynomial_degree);
         }
-        if(eraseOutliers){
+        if(!eraseOutliers){
             data.setSgEraseOutliers(eraseOutliers);
         }
         if(iterations != 0){

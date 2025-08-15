@@ -13,11 +13,11 @@ public class Calculator {
     // ======== INTERFACES ==========
 
     private interface NumericCalculations{
-        Spectrum calculate(CalculatorData data);
+        Spectrum calculate(Spectrum spec1, Spectrum spec2);
     }   
 
     private interface AreaCalculations{
-        double calculateArea(CalculatorData data);
+        double calculateArea(ROI roi);
     }
 
     // ======== ENUMS ==========
@@ -25,14 +25,14 @@ public class Calculator {
     public enum CalculatingAlgos implements NumericCalculations{
         ADDITION {
             @Override
-            public Spectrum calculate(CalculatorData data) {
-                return RunAlgos.add(data);
+            public Spectrum calculate(Spectrum spec1, Spectrum spec2) {
+                return RunAlgos.add(spec1, spec2);
             }
         },
         SUBTRACTION {
             @Override
-            public Spectrum calculate(CalculatorData data) {
-                return RunAlgos.subtract(data);
+            public Spectrum calculate(Spectrum spec1, Spectrum spec2) {
+                return RunAlgos.subtract(spec1, spec2);
             }
                 
         }
@@ -41,14 +41,14 @@ public class Calculator {
     public enum AreaAlgos implements AreaCalculations{
         GAUSS {
             @Override
-            public double calculateArea(CalculatorData data) {
-                return RunAlgos.calculateAreaUsingGauss(data);
+            public double calculateArea(ROI roi) {
+                return RunAlgos.calculateAreaUsingGauss(roi);
             }
         },
         COUNTS {
             @Override
-            public double calculateArea(CalculatorData data) {
-                return RunAlgos.calculateAreaUsingCounts(data);
+            public double calculateArea(ROI roi) {
+                return RunAlgos.calculateAreaUsingCounts(roi);
             }
         }
     }
@@ -60,9 +60,7 @@ public class Calculator {
 
         //============= ADDITION =============
 
-        private static Spectrum add(CalculatorData data) {
-        Spectrum spec1 = data.spectrum1;
-        Spectrum spec2 = data.spectrum2;
+        private static Spectrum add(Spectrum spec1, Spectrum spec2) {
         int channel_count = spec1.getChannel_count();
 
         if(spec1 == null || spec2 == null) {
@@ -79,9 +77,7 @@ public class Calculator {
 
     //============== SUBSTRACTION ===================================================
 
-        private static Spectrum subtract(CalculatorData data) {
-            Spectrum spec1 = data.spectrum1;
-            Spectrum spec2 = data.spectrum2;
+        private static Spectrum subtract(Spectrum spec1, Spectrum spec2) {
             int channel_count = spec1.getChannel_count();
 
             if(spec1 == null || spec2 == null) {
@@ -97,13 +93,7 @@ public class Calculator {
         }
 
     //================ AREA WITH GAUSS===============================
-        private static double calculateAreaUsingGauss(CalculatorData data) {
-
-            if(data.roi == null) {
-                throw new IllegalArgumentException("ROI must be provided for area calculation.");
-            }
-
-            ROI roi = data.roi;
+        private static double calculateAreaUsingGauss(ROI roi) {
 
             double[] params = Fitter.PeakFitAlgos.GAUSS.fit(roi);
 
@@ -119,26 +109,21 @@ public class Calculator {
         }
 
     //================ AREA WITH COUNTS =========================
-        public static double calculateAreaUsingCounts(CalculatorData data) {
+        public static double calculateAreaUsingCounts(ROI roi) {
 
-            if(data.roi == null) {
-                throw new IllegalArgumentException("ROI must be provided for area calculation.");
-            }
+            //========================================================================================
+            //Calculate Background using ALS
+            double[] estimatedBackground = Fitter.BackgroundFitAlgos.ALS_FAST.fit(new FittingData(roi.getSpectrum()));
 
-            Spectrum spectrum = data.roi.getSpectrum();
-            double startEnergy = data.roi.getStartEnergy();
-            double endEnergy = data.roi.getEndEnergy();
+            Spectrum backgroundSpectrum = new Spectrum(roi.getSpectrum().getEnergy_per_channel(), estimatedBackground);
 
-            //Calculate Background using ALS    
-            double[] estimatedBackground = Fitter.BackgroundFitAlgos.ALS_FAST.fit(new FittingData(spectrum));
-            Spectrum backgroundSpectrum = new Spectrum(spectrum.getEnergy_per_channel(), estimatedBackground);
             //Substract Background from Spectrum
-            CalculatorData calcData = new CalculatorData(CalculatorData.OperationType.NUMERIC, spectrum, backgroundSpectrum);
-            Spectrum cleanedSpectrum = CalculatingAlgos.SUBTRACTION.calculate(calcData);
+            Spectrum cleanedSpectrum = CalculatingAlgos.SUBTRACTION.calculate(roi.getSpectrum(), backgroundSpectrum);
+            //========================================================================================
 
             //Find start and end channels
-            int startChannel = Helper.findChannelFromEnergy(startEnergy, cleanedSpectrum.getEnergy_per_channel());
-            int endChannel = Helper.findChannelFromEnergy(endEnergy, cleanedSpectrum.getEnergy_per_channel());
+            int startChannel = Helper.findChannelFromEnergy(roi.getStartEnergy(), cleanedSpectrum.getEnergy_per_channel());
+            int endChannel = Helper.findChannelFromEnergy(roi.getEndEnergy(), cleanedSpectrum.getEnergy_per_channel());
 
             double area = 0.0;
             double[] counts = cleanedSpectrum.getCounts();

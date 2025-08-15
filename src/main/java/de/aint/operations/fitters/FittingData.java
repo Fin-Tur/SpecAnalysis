@@ -11,7 +11,7 @@ public class FittingData{
         static final double p = 8e-4;
         static final int maxIter = 50;
         //SMOOTHING-VALUES
-        static final int sgWindowSize = 17;
+        static final int sgWindowSize = 11;
         static final int sgIters = 1;
         static final boolean sgEraseOutliers = true;
         static final int sgPolynomialDegree = 2;

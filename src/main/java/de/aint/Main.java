@@ -11,6 +11,7 @@ public class Main {
 
         Spectrum spec1 = Reader.readFile("C:/Users/f.willems/IdeaProjects/SpecAnalysis/src/main/resources/Leere_Kammer_85_40_50_1000_930_p_8k.Spe");
         //spec1.changeEnergyCal(1677, 2223.248, 391, 511);
+        
         Spectrum smooth = SpectrumBuilder.createSmoothedSpectrumUsingSG(spec1, 0, 0, false, 0);
         Spectrum bckgroundsmt = SpectrumBuilder.createBackgroundSpectrum(spec1);
 

@@ -3,7 +3,6 @@ package de.aint.detectors;
 import de.aint.builders.SpectrumBuilder;
 import de.aint.models.*;
 import de.aint.operations.*;
-import de.aint.operations.calculators.CalculatorData;
 import de.aint.operations.calculators.Calculator.CalculatingAlgos;
 import de.aint.readers.IsotopeReader;
 
@@ -17,8 +16,7 @@ public class PeakDetection {
             ArrayList<ROI> peaks = new ArrayList<>();
             Spectrum smoothed = SpectrumBuilder.createSmoothedSpectrumUsingSG(spec, 0, 0, false, 0);
 
-            CalculatorData calcData = new CalculatorData(CalculatorData.OperationType.NUMERIC, smoothed, background);
-            Spectrum clearedSpectrum = CalculatingAlgos.SUBTRACTION.calculate(calcData);
+            Spectrum clearedSpectrum = CalculatingAlgos.SUBTRACTION.calculate(smoothed, background);
 
             double[] counts = clearedSpectrum.getCounts();
             double[] backgroundCnt = background.getCounts();

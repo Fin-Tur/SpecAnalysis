@@ -148,6 +148,7 @@ function plotSelectedSpectra() {
             .map(opt => {
                 let iterations = null;
                 let windowSize = null;
+                let sigma = null;
                 let backgroundSource = null;
                 let customIsotopes = null;
                 // Für SG: Iterationen und Window Size, für Gauss: Sigma
@@ -159,6 +160,10 @@ function plotSelectedSpectra() {
                         iterations = input ? input.value : null;
                         const winInput = document.querySelector(`.window-input[data-endpoint="/smoothed"]`);
                         windowSize = winInput ? winInput.value : null;
+                    }
+                    if(algorithm === "GAUSS"){
+                        const sigmaInput = document.querySelector(`.sigma-input[data-endpoint="/smoothed"]`);
+                        sigma = sigmaInput ? sigmaInput.value : null;
                     }
                     // Für Gauss: Iterationen und Window Size ignorieren, stattdessen sigma
                 }
@@ -176,7 +181,7 @@ function plotSelectedSpectra() {
                         customSource = customSourceSelect.value;
                     }
                 }
-                return fetchSpectrum(opt.endpoint, iterations, windowSize, backgroundSource, customSource, customIsotopes).then(data => ({
+                return fetchSpectrum(opt.endpoint, iterations, windowSize, sigma, backgroundSource, customSource, customIsotopes).then(data => ({
                     ...opt,
                     data
                 }));
