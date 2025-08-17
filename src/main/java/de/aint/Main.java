@@ -17,7 +17,7 @@ public class Main {
 
     
 
-        ROI[] detectedPeaks = PeakDetection.detectPeaks(spec1, bckgroundsmt);
+        ROI[] detectedPeaks = PeakDetection.detectPeaks(spec1);
         for(ROI peak : detectedPeaks) {
             System.out.println("Detected Isotope: " + peak.getEstimatedIsotope() + " @ energy [keV] "+ peak.getStartEnergy()+1);
         }

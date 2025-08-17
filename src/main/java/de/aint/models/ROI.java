@@ -64,7 +64,7 @@ public class ROI {
         this.spectrum = spec;
         this.peakCenter = peakCenter;
 
-        PeakDetection.detectAndSetPeakSize(this, 3);
+        PeakDetection.detectAndSetPeakSizeUsingGradient(this, 3);
         //PeakDetection.detectAndSetPeakSizeUsingFWHM(this, 1);
     }
     //Overload Constructor for full control

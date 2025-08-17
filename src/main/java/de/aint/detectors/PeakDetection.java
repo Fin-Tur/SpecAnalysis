@@ -11,10 +11,11 @@ import java.util.ArrayList;
 
 public class PeakDetection {
 
-    public static ROI[] detectPeaks(Spectrum spec, Spectrum background){
+    public static ROI[] detectPeaks(Spectrum spec){
 
             ArrayList<ROI> peaks = new ArrayList<>();
             Spectrum smoothed = SpectrumBuilder.createSmoothedSpectrumUsingSG(spec, 0, 0, false, 0);
+            Spectrum background = SpectrumBuilder.createBackgroundSpectrum(spec);
 
             Spectrum clearedSpectrum = CalculatingAlgos.SUBTRACTION.calculate(smoothed, background);
 
@@ -47,8 +48,7 @@ public class PeakDetection {
     }
  
     public static ROI[] detectPeaksUsingSecondDerivative(Spectrum spec, Spectrum background) {
-    
-
+        //TODO
         return null; 
 
     }
@@ -91,7 +91,7 @@ public class PeakDetection {
 
     }
 
-    public static void detectAndSetPeakSize(ROI roi, int windowSize) {
+    public static void detectAndSetPeakSizeUsingGradient(ROI roi, int windowSize) {
         int peakCenter = Helper.findChannelFromEnergy(roi.getPeakCenter(), roi.getSpectrum().getEnergy_per_channel());
         double peakHeight = roi.getSpectrum().getCounts()[peakCenter];
 
