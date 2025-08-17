@@ -72,7 +72,7 @@ SpecAnalysis is a web-based gamma spectrum analysis tool designed for isotope id
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/USERNAME/SpecAnalysis.git
+git clone https://github.com/Fin-Tur/SpecAnalysis.git
 cd SpecAnalysis
 ```
 2. Install dependencies:
