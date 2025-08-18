@@ -95,8 +95,8 @@ public class Api {
             if(source.equals("isotopes")){
                 customSpectrum = SpectrumBuilder.createCustomSpectrum(variants[3], selectedIsotopes, isotopeReader);
             }else if(source.equals("peaks")){
-                ROI[] peaks = PeakDetection.detectPeaks(variants[1]);
-                customSpectrum = SpectrumBuilder.createPeakFitSpectrum(variants[2], peaks);
+                ROI[] peaks = PeakDetection.detectPeaks(variants[0]);
+                customSpectrum = SpectrumBuilder.createPeakFitSpectrum(variants[3], peaks);
             }
            
             ctx.json(customSpectrum);

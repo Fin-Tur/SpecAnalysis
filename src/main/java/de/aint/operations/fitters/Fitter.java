@@ -12,6 +12,7 @@ import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
+import de.aint.builders.SpectrumBuilder;
 import de.aint.libraries.SmoothingLib;
 import de.aint.models.ROI;
 import de.aint.models.Spectrum;
@@ -98,12 +99,19 @@ private static class RunAlgos{
         double[] counts = roi.getSpectrum().getCounts();
         int start_channel = Helper.findChannelFromEnergy(roi.getStartEnergy(), roi.getSpectrum().getEnergy_per_channel());
         int end_channel = Helper.findChannelFromEnergy(roi.getEndEnergy(), roi.getSpectrum().getEnergy_per_channel());
+        int center_channel = Helper.findChannelFromEnergy(roi.getPeakCenter(), roi.getSpectrum().getEnergy_per_channel());
+
+        int len = end_channel - start_channel;
+        if(len == 0) len = 1;
+        System.out.println(len);
 
         //Create a Gaussian fitter
         WeightedObservedPoints obs = new WeightedObservedPoints();
         for (int i = start_channel; i <= end_channel; i++) {
             if (i >= 0 && i < counts.length) {
-                obs.add(i, counts[i]);
+                double weight = 1 - (Math.abs(center_channel - i)/(len/2.0));
+                System.out.println("Weight: "+weight);
+                obs.add(weight, i, counts[i]);
             }
         }
         GaussianCurveFitter fitter = GaussianCurveFitter.create().withMaxIterations(100000);
