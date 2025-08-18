@@ -36,7 +36,8 @@ public class PeakDetection {
             }
 
         //Match ROIs w Isotopes
-        IsotopeReader isotopeReader = new IsotopeReader();
+        IsotopeReader isotopeReader = new IsotopeReader("C:/Users/f.willems/IdeaProjects/SpecAnalysis/src/main/resources/isotop_details.txt");
+        isotopeReader.readIsotopes();
         for(ROI roi : peaks) {
             Isotop matchedIso = MatchRoiWithIsotop.matchRoiWithIsotop(roi, isotopeReader, 1);
             roi.setEstimatedIsotope(matchedIso);

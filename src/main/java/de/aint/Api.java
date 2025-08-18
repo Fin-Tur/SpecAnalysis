@@ -32,7 +32,8 @@ public class Api {
         
 
         //get Isotopes
-        IsotopeReader isotopeReader = new IsotopeReader();
+        IsotopeReader isotopeReader = new IsotopeReader("C:/Users/f.willems/IdeaProjects/SpecAnalysis/src/main/resources/isotop_details.txt");
+        isotopeReader.readIsotopes();
         ArrayList<Isotop> isotopes = isotopeReader.isotopes;
 
         
