@@ -16,8 +16,8 @@ public class IsotopeReader {
     }
 
     public void readIsotopes(){
-         isotopes.add(new Isotop("0", "UNK", 0, 0, 0));
-        isotopes.add(new Isotop("1", "ANNH", 511, 0, 0));
+        this.isotopes.add(new Isotop("0", "UNK", 0, 0, 0));
+        this.isotopes.add(new Isotop("1", "ANNH", 511, 0, 0));
         File file = new File(filePath);
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
@@ -30,7 +30,7 @@ public class IsotopeReader {
             double energy = Double.parseDouble(args[2]);
             double intensity = Double.parseDouble(args[3]);
             double abundance = Double.parseDouble(args[4]);
-            isotopes.add(new Isotop(id, symbol, energy, intensity, abundance));
+            this.isotopes.add(new Isotop(id, symbol, energy, intensity, abundance));
             }
             
 

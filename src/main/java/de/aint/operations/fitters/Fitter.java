@@ -108,7 +108,6 @@ private static class RunAlgos{
         }
         GaussianCurveFitter fitter = GaussianCurveFitter.create().withMaxIterations(100000);
         // Fit the Gaussian curve to the observed points
-        System.out.println("Fitting Gaussian curve " + roi.getPeakCenter());
         double[] gaussParams = {0, roi.getPeakCenter(), 1};
 
         try{
@@ -178,17 +177,17 @@ private static class RunAlgos{
 
             double[] weight = FitterHelper.createSavitzkyGolayKernel(window_size, polynomial_degree);
             //Smooth spectrum
-            for(int i = half_window; i<spec.getChannel_count()-half_window; i++){
+            for(int i = 0; i<spec.getChannel_count(); i++){
                 double count = 0;
                 //Check for false peaks
-                if(eraseOutliers && FitterHelper.exceedsStandardDeviation(Arrays.copyOfRange(counts, i-half_window, i+half_window+1), 5f)){
+                if(eraseOutliers && FitterHelper.exceedsStandardDeviation(Arrays.copyOfRange(counts, Math.max(i-half_window, 0), Math.min(i+half_window+1, counts.length-1)), 5f)){
                     smoothed_counts[i] = counts[i];
                     continue;
                 }
                 double[] window = new double[window_size];
-                window = Arrays.copyOfRange(counts, i-half_window, i+half_window+1);
+                window = Arrays.copyOfRange(counts, Math.max(i-half_window, 0), Math.min(i+half_window+1, counts.length-1));
                 for(int j = -half_window; j<=half_window; j++){
-                    count += counts[i+j] * weight[j+half_window];
+                    count += counts[FitterHelper.mirrorIndex(i+j, counts.length)] * weight[FitterHelper.mirrorIndex(j+half_window, weight.length)];
                 }
                 smoothed_counts[i] = count;
                 //half_window++;

@@ -32,7 +32,7 @@ public class Api {
         
 
         //get Isotopes
-        IsotopeReader isotopeReader = new IsotopeReader("C:/Users/f.willems/IdeaProjects/SpecAnalysis/src/main/resources/isotop_details.txt");
+        IsotopeReader isotopeReader = new IsotopeReader("C:\\Users\\f.willems\\Projects\\SpecAnalysis\\src\\main\\resources\\isotop_details.txt");
         isotopeReader.readIsotopes();
         ArrayList<Isotop> isotopes = isotopeReader.isotopes;
 
@@ -95,8 +95,8 @@ public class Api {
             if(source.equals("isotopes")){
                 customSpectrum = SpectrumBuilder.createCustomSpectrum(variants[3], selectedIsotopes, isotopeReader);
             }else if(source.equals("peaks")){
-                ROI[] peaks = PeakDetection.detectPeaks(variants[0]);
-                customSpectrum = SpectrumBuilder.createPeakFitSpectrum(variants[3], peaks);
+                ROI[] peaks = PeakDetection.detectPeaks(variants[1]);
+                customSpectrum = SpectrumBuilder.createPeakFitSpectrum(variants[2], peaks);
             }
            
             ctx.json(customSpectrum);
@@ -120,7 +120,7 @@ public class Api {
                 spec.changeEnergyCal(channels, energies);
                 variants = SpectrumBuilder.createSpectrumVariants(spec);
                 if(!tempFile.delete()) System.out.println("Could not delete temporary file: " + tempFile.getAbsolutePath());
-                ctx.json(spec);
+                ctx.json(variants[0]);
             } else {
                 ctx.status(400).result("No file uploaded");
             }

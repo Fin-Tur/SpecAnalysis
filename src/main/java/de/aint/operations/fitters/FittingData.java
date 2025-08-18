@@ -9,11 +9,11 @@ public class FittingData{
         //BACKGROUND-VALUES
         static final double lambda = 2e4;
         static final double p = 8e-4;
-        static final int maxIter = 50;
+        static final int maxIter = 10;
         //SMOOTHING-VALUES
-        static final int sgWindowSize = 11;
+        static final int sgWindowSize = 17;
         static final int sgIters = 1;
-        static final boolean sgEraseOutliers = true;
+        static final boolean sgEraseOutliers = false;
         static final int sgPolynomialDegree = 2;
         static final double gaussSigma = 3.0;
         

@@ -76,7 +76,7 @@ public abstract class SpectrumBuilder {
         if(polynomial_degree != 0){
             data.setSgPolynomialDegree(polynomial_degree);
         }
-        if(!eraseOutliers){
+        if(eraseOutliers){
             data.setSgEraseOutliers(eraseOutliers);
         }
         if(iterations != 0){
@@ -111,10 +111,13 @@ public abstract class SpectrumBuilder {
         Spectrum[] variants = new Spectrum[4];
         variants[0] = spec;
         //0 for standart vals
-        variants[1] = createSmoothedSpectrumUsingSG(spec, 0, 0, false, 0);
+        variants[1] = createSmoothedSpectrumUsingSG(spec, 0, 0, true, 0);
+        
         //Declare Background variants
         variants[2] = createBackgroundSpectrum(spec);
-        variants[3] = createBackgroundSpectrum(variants[1]);
+        //Declare Gauss smoothed spectrum, because : SG => overshooting and : overshooting + ALS background => undershooting
+        Spectrum gauss = createSmoothedSpectrumUsingGauss(spec, 3.0);
+        variants[3] = createBackgroundSpectrum(gauss);
 
         return variants;
     }

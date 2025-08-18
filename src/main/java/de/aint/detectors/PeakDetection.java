@@ -14,8 +14,9 @@ public class PeakDetection {
     public static ROI[] detectPeaks(Spectrum spec){
 
             ArrayList<ROI> peaks = new ArrayList<>();
-            Spectrum smoothed = SpectrumBuilder.createSmoothedSpectrumUsingSG(spec, 0, 0, false, 0);
-            Spectrum background = SpectrumBuilder.createBackgroundSpectrum(spec);
+            Spectrum smoothed = SpectrumBuilder.createSmoothedSpectrumUsingSG(spec, 0, 0, true, 0);
+
+            Spectrum background = SpectrumBuilder.createBackgroundSpectrum(SpectrumBuilder.createSmoothedSpectrumUsingGauss(spec, 3.0)); //Using gauss smoothed so no undershooting
 
             Spectrum clearedSpectrum = CalculatingAlgos.SUBTRACTION.calculate(smoothed, background);
 
@@ -23,7 +24,6 @@ public class PeakDetection {
             double[] backgroundCnt = background.getCounts();
 
             double[] energy = spec.getEnergy_per_channel();
-            System.out.println("ENERGY\tCOUNTS\tCHANNEL\tTRHESHOLD\n");
             for(int i = 1; i<counts.length - 1; i++) {
                 //Initialize treshhold
                 double treshhold = backgroundCnt[i] + 1.65f * Math.sqrt(backgroundCnt[i]);
@@ -36,7 +36,7 @@ public class PeakDetection {
             }
 
         //Match ROIs w Isotopes
-        IsotopeReader isotopeReader = new IsotopeReader("C:/Users/f.willems/IdeaProjects/SpecAnalysis/src/main/resources/isotop_details.txt");
+        IsotopeReader isotopeReader = new IsotopeReader("C:\\Users\\f.willems\\Projects\\SpecAnalysis\\src\\main\\resources\\isotop_details.txt");
         isotopeReader.readIsotopes();
         for(ROI roi : peaks) {
             Isotop matchedIso = MatchRoiWithIsotop.matchRoiWithIsotop(roi, isotopeReader, 1);
@@ -109,7 +109,6 @@ public class PeakDetection {
 
         double startEnergy = Math.max(roi.getPeakCenter() - FWHM / 2, 0);
         double endEnergy = Math.min(roi.getPeakCenter() + FWHM / 2, roi.getSpectrum().getEnergy_per_channel()[roi.getSpectrum().getChannel_count() - 1]);
-        System.out.println("FWHM Peak start: " + startEnergy + ", end: " + endEnergy + " FWHM: " + FWHM);
         roi.setStartEnergy(startEnergy);
         roi.setEndEnergy(endEnergy);
 
