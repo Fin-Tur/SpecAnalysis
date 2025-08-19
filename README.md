@@ -62,6 +62,10 @@ SpecAnalysis is a web-based gamma spectrum analysis tool designed for isotope id
 <img width="1243" height="910" alt="CustomGraph (1)" src="https://github.com/user-attachments/assets/662d93f0-b1cf-472a-ae14-c9b6bd535ffb" />
 
 
+### Automatic Peak Fitting
+<img width="1244" height="879" alt="Screenshot 2025-08-19 185247" src="https://github.com/user-attachments/assets/d66ff740-8fb7-40f4-9892-d0bce5bf3dd9" />
+
+
 ### Peak Detection and Isotope Assignment
 <img width="1269" height="931" alt="Peaks" src="https://github.com/user-attachments/assets/8dd893fd-e419-45a9-9791-2ae09795a9fe" />
 
