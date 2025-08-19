@@ -6,6 +6,7 @@ import io.javalin.Javalin;
 import io.javalin.http.UploadedFile;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -95,15 +96,16 @@ public class Api {
             if(source.equals("isotopes")){
                 customSpectrum = SpectrumBuilder.createCustomSpectrum(variants[3], selectedIsotopes, isotopeReader);
             }else if(source.equals("peaks")){
-                ROI[] peaks = PeakDetection.detectPeaks(variants[0]);
-                customSpectrum = SpectrumBuilder.createPeakFitSpectrum(variants[3], peaks);
+                ROI[] rois = PeakDetection.splitSpectrumIntoRois(variants[0]);
+                ROI[] testROIS = Arrays.copyOfRange(rois, 3, rois.length-4);
+                customSpectrum = SpectrumBuilder.createPeakFitSpectrum(variants[3], testROIS);
             }
            
             ctx.json(customSpectrum);
         });
 
         app.get("/peaks", ctx -> {
-            ROI[] peaks = PeakDetection.detectPeaks(variants[0]);
+            Peak[] peaks = PeakDetection.detectPeaks(variants[0]).toArray(new Peak[0]);
             ctx.json(peaks);
         });
 

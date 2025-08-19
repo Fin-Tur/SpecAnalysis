@@ -2,9 +2,10 @@ package de.aint.operations.fitters;
 
 
 import java.util.Arrays;
+import java.util.ArrayList;
 
 import org.apache.commons.math3.fitting.GaussianCurveFitter;
-import org.apache.commons.math3.fitting.WeightedObservedPoints;
+import org.apache.commons.math3.fitting.WeightedObservedPoint;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.CholeskyDecomposition;
 import org.apache.commons.math3.linear.DecompositionSolver;
@@ -12,7 +13,6 @@ import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
-import de.aint.builders.SpectrumBuilder;
 import de.aint.libraries.SmoothingLib;
 import de.aint.models.ROI;
 import de.aint.models.Spectrum;
@@ -85,7 +85,7 @@ public enum PeakFitAlgos implements PeakFitAlgo {
     GAUSS{
         @Override
         public double[] fit(ROI roi) {
-            return RunAlgos.fitGaussCurveToRoi(roi);
+            return null;//RunAlgos.fitGaussCurveToRoi(roi);
         }
     }
 
@@ -95,23 +95,24 @@ private static class RunAlgos{
 
     //================================================GAUSS-PEAK-FITTER===================================================
     // !!! returns Gauss Curve params !!!
-    private static double[] fitGaussCurveToRoi(ROI roi){
+    /*private static double[] fitGaussCurveToRoi(ROI roi){
         double[] counts = roi.getSpectrum().getCounts();
-        int start_channel = Helper.findChannelFromEnergy(roi.getStartEnergy(), roi.getSpectrum().getEnergy_per_channel());
-        int end_channel = Helper.findChannelFromEnergy(roi.getEndEnergy(), roi.getSpectrum().getEnergy_per_channel());
-        int center_channel = Helper.findChannelFromEnergy(roi.getPeakCenter(), roi.getSpectrum().getEnergy_per_channel());
+        int startChannel = Helper.findChannelFromEnergy(roi.getStartEnergy(), roi.getSpectrum().getEnergy_per_channel());
+        int endChannel = Helper.findChannelFromEnergy(roi.getEndEnergy(), roi.getSpectrum().getEnergy_per_channel());
+        int centerChannel = Helper.findChannelFromEnergy(roi.getPeakCenter(), roi.getSpectrum().getEnergy_per_channel());
 
-        int len = end_channel - start_channel;
+        int len = endChannel - startChannel;
         if(len == 0) len = 1;
         System.out.println(len);
 
         //Create a Gaussian fitter
-        WeightedObservedPoints obs = new WeightedObservedPoints();
-        for (int i = start_channel; i <= end_channel; i++) {
+        ArrayList<WeightedObservedPoint> obs = new ArrayList<>();
+        for (int i = startChannel; i <= endChannel; i++) {
             if (i >= 0 && i < counts.length) {
-                double weight = 1 - (Math.abs(center_channel - i)/(len/2.0));
+                double weight = 1 - (Math.abs(centerChannel - i)/(len/2.0));
                 System.out.println("Weight: "+weight);
-                obs.add(weight, i, counts[i]);
+                WeightedObservedPoint point = new WeightedObservedPoint(weight, i, counts[i]);
+                obs.add(point);
             }
         }
         GaussianCurveFitter fitter = GaussianCurveFitter.create().withMaxIterations(100000);
@@ -119,7 +120,7 @@ private static class RunAlgos{
         double[] gaussParams = {0, roi.getPeakCenter(), 1};
 
         try{
-            gaussParams = fitter.fit(obs.toList());
+            gaussParams = fitter.fit(obs);
         }catch(Exception e){
             System.err.println("Error fitting Gaussian curve: " + e.getMessage());
         }
@@ -127,7 +128,7 @@ private static class RunAlgos{
         
 
         return gaussParams;
-    }
+    }*/
 
     //==================================================GAUSS================================================================
 

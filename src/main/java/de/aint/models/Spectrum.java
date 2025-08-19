@@ -54,16 +54,6 @@ public class Spectrum {
         IntStream.range(0,this.counts.length).forEach(i -> this.counts[i]*=this.srcForce);
     }
 
-    //Func to change energy calibration
-    /*public void changeEnergyCal(int channel1, double energy1, int channel2, double energy2){
-
-        double slope = (energy2-energy1) / (channel2-channel1);
-        double offset = energy1 - slope*channel1;
-
-        this.ec_offset = offset;
-        this.ec_slope = slope;
-        this.convertChannelsToEnergy();
-    }*/
 
     public void changeEnergyCal(int[] channels, double[] energies) {
     if (channels.length != energies.length || channels.length < 2) {
@@ -113,7 +103,7 @@ public class Spectrum {
         return this.channel_count;
     }
 
-    public double getFwhmForNumber(int channel){
+    public double getFwhmForNumber(int channel){ // Full Width at Half Maximum
         return shape_cal[0] + shape_cal[1] * channel + shape_cal[2] * channel * channel;
     }
 }
