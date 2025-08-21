@@ -2,7 +2,6 @@ package de.aint;
 
 
 import de.aint.detectors.PeakDetection;
-import de.aint.detectors.SumGaussNumeric;
 import de.aint.models.*;
 import de.aint.readers.Reader;
 import de.aint.builders.*;
@@ -18,14 +17,6 @@ public class Main {
         int[] channels = {1677, 391, 3722, 5740};
         double[] energies = {2223.248, 511, 4945.301, 7631.136};
         spec.changeEnergyCal(channels, energies);
-
-        ROI[] rois = PeakDetection.splitSpectrumIntoRois(spec);
-
-        ROI roi = rois[5];
-        double[] fitParams = SumGaussNumeric.fitGaussToROI(roi);
-        for(var param : fitParams) {
-            System.out.println("Fitted Parameter: " + param);
-        }
 
         return;
 

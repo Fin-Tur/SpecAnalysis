@@ -1,17 +1,18 @@
 package de.aint.builders;
 
-import de.aint.detectors.SumGaussNumeric;
 import de.aint.models.*;
 import de.aint.operations.*;
-import de.aint.operations.calculators.Calculator.CalculatingAlgos;
 import de.aint.operations.fitters.*;
 import de.aint.readers.IsotopeReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import org.apache.commons.math3.special.Erf;
 
-public abstract class SpectrumBuilder {
+public class SpectrumBuilder {
+
+    private SpectrumBuilder() {
+        // private constructor to prevent instantiation
+    }
 
     //=====================PEAK_FITTING======================================
     public static Spectrum createPeakFitSpectrum(Spectrum spec, ROI[] rois) {
@@ -23,8 +24,8 @@ public abstract class SpectrumBuilder {
     boolean[] touched = new boolean[n];                 // welche Bins wurden von irgendeiner ROI beschrieben?
 
     for (ROI roi : rois) {
-        
-        double[] p = SumGaussNumeric.fitGaussToROI(roi);   // p = [B, σ, A1, μ1, T1, G1, A2, μ2, T2, G2, ...]
+        roi.fitGaussCurve(); // Fit the peaks in the ROI using the GAUSS-LM algorithm
+        double[] p = roi.getFitParams();   // p = [B, σ, A1, μ1, T1, G1, A2, μ2, T2, G2, ...]
 
         double B   = p[0];
         double sigma = p[1];

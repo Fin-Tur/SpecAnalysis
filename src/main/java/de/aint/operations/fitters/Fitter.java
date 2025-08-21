@@ -82,10 +82,10 @@ public enum SmoothingFitAlgos implements FitAlgo {
 
 public enum PeakFitAlgos implements PeakFitAlgo {
 
-    GAUSS{
+    GAUSSLM{
         @Override
         public double[] fit(ROI roi) {
-            return null;//RunAlgos.fitGaussCurveToRoi(roi);
+            return RunAlgos.fitGaussToROIUsingLM(roi);
         }
     }
 
@@ -129,6 +129,40 @@ private static class RunAlgos{
 
         return gaussParams;
     }*/
+
+    //=================================================LM-GAUSS-PEAK-FITTER==================================================
+    // !!! return params [B, sigma, A1, mu1, T1, G1, ..., An, mun, Tn, Gn] !!!
+    public static double[] fitGaussToROIUsingLM(ROI roi){
+
+        //Prepare ROI for Gauss fitting
+        int channelBeg = Helper.findChannelFromEnergy(roi.getStartEnergy(), roi.getSpectrum().getEnergy_per_channel());
+        int channelEnd = Helper.findChannelFromEnergy(roi.getEndEnergy(), roi.getSpectrum().getEnergy_per_channel());
+        double[] E = Arrays.copyOfRange(roi.getSpectrum().getEnergy_per_channel(), channelBeg, channelEnd+1);
+        double[] y = Arrays.copyOfRange(roi.getSpectrum().getCounts(), channelBeg, channelEnd+1);
+        double[] background = Arrays.copyOfRange(roi.getBackgroundSpectrum().getCounts(), channelBeg, channelEnd+1);
+
+        //Guess initial Parameters
+        double[] start = new double[2 + 4 * (roi.getPeaks().length)];
+        double[] muSet = new double[roi.getPeaks().length];
+        double[] Aset = new double[roi.getPeaks().length];
+        start[0] = (background[0]+background[background.length-1]) / 2 ; //Baseline
+        start[1] = roi.getSpectrum().getFwhmForNumber(Helper.findChannelFromEnergy(roi.getPeaks()[0].getPeakCenter(), roi.getSpectrum().getEnergy_per_channel())) / 2.35; //Sigma
+        for (int i = 0; i < roi.getPeaks().length; i++) {
+            start[2 + 4 * i] = roi.getSpectrum().getCounts()[Helper.findChannelFromEnergy(roi.getPeaks()[i].getPeakCenter(), roi.getSpectrum().getEnergy_per_channel())]-start[0]; //Amplitude
+            Aset[i] = roi.getSpectrum().getCounts()[Helper.findChannelFromEnergy(roi.getPeaks()[i].getPeakCenter(), roi.getSpectrum().getEnergy_per_channel())]-start[0];
+            start[3 + 4 * i] = roi.getPeaks()[i].getPeakCenter(); //Mu
+            muSet[i] = roi.getPeaks()[i].getPeakCenter(); //Store mu for projection
+            start[4 + 4 * i] = 0.5; //Relative Tailing Amplitude
+            start[5 + 4 * i] = 1.5; //Gradient of Tailing
+        }
+
+        
+        double bSet = (background[0]+background[background.length-1]) / 2;
+        int maxIter = 100;
+
+        return LMPeakFitting.fit(E, y, start, maxIter, bSet, muSet, Aset, LMPeakFitting.calculateWeight(E, y, muSet, 4.5, 2.0, start[1]));
+
+    }
 
     //==================================================GAUSS================================================================
 

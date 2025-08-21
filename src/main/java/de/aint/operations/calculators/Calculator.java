@@ -56,7 +56,7 @@ public class Calculator {
 
     //============== METHODS ================
 
-    class RunAlgos{
+    private class RunAlgos{
 
         //============= ADDITION =============
 
@@ -95,7 +95,7 @@ public class Calculator {
     //================ AREA WITH GAUSS===============================
         private static double calculateAreaUsingGauss(ROI roi) {
 
-            double[] params = Fitter.PeakFitAlgos.GAUSS.fit(roi);
+            double[] params = Fitter.PeakFitAlgos.GAUSSLM.fit(roi);
 
             // The area under the Gaussian is given by the formula:
             // Area = A * sqrt(2 * pi) * sigma

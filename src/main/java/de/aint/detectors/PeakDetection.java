@@ -27,7 +27,7 @@ public class PeakDetection {
             for(int i = 1; i<counts.length - 1; i++) {
                 //Initialize treshhold
                 double treshhold = backgroundCnt[i] + 1.65f * Math.sqrt(backgroundCnt[i]);
-                if(counts[i] > counts[i - 1] && counts[i] > counts[i + 1] && counts[i] > treshhold && energy[i] < 10000) {
+                if(counts[i] > counts[i - 1] && counts[i] > counts[i + 1] && counts[i] > treshhold && energy[i] < 9500) {
                     // Found a peak
                     peaks.add(new Peak(energy[i]));
                 }

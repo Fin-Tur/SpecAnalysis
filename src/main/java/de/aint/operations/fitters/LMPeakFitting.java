@@ -1,22 +1,18 @@
-package de.aint.detectors;
+package de.aint.operations.fitters;
 
-import de.aint.models.*;
-import de.aint.operations.Helper;
-
-import java.util.Arrays;
-
-import org.apache.commons.math3.fitting.leastsquares.*;
+import org.apache.commons.math3.fitting.leastsquares.LeastSquaresBuilder;
 import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer.Optimum;
-import org.apache.commons.math3.linear.*;
+import org.apache.commons.math3.fitting.leastsquares.LeastSquaresProblem;
+import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
+import org.apache.commons.math3.fitting.leastsquares.MultivariateJacobianFunction;
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.DiagonalMatrix;
+import org.apache.commons.math3.special.Erf;
 import org.apache.commons.math3.util.Pair;
 
-
-import org.apache.commons.math3.special.Erf;
-
-
-public final class SumGaussNumeric {
-
-    //Changed allowed
+public class LMPeakFitting {
+       //Changed allowed
     static final double muRangeRadius = 0;
     static final double ARangeRadius = 100;
 
@@ -30,7 +26,7 @@ public final class SumGaussNumeric {
         return Math.max(min, Math.min(max, value));
     }
 
-    private static double[] calculateWeight(double[] E, double[] y, double[] muSet, double alpha, double kreach, double sigma) {
+    public static double[] calculateWeight(double[] E, double[] y, double[] muSet, double alpha, double kreach, double sigma) {
         //Poisson weights
         double[] weight = new double[y.length];
         for(int i = 0; i < y.length; i++) {
@@ -142,7 +138,6 @@ public final class SumGaussNumeric {
     public static double[] fit(double[] E, double[] y, double[] start, int maxIter, double bCap, double[] muSet, double[] Aset, double[] w){
 
 
-        System.out.println("Building problem...");
         LeastSquaresProblem problem = new LeastSquaresBuilder()
                 .model(numericModel(E, bCap, muSet, Aset))
                 .target(new ArrayRealVector(y, false))
@@ -156,40 +151,5 @@ public final class SumGaussNumeric {
         double[] p = opt.getPoint().toArray();
         return project(p, sigmaMinFromE(E), bCap, muSet, Aset);
         
-    }
-
-    public static double[] fitGaussToROI(ROI roi){
-
-        //Prepare ROI for Gauss fitting
-        int channelBeg = Helper.findChannelFromEnergy(roi.getStartEnergy(), roi.getSpectrum().getEnergy_per_channel());
-        int channelEnd = Helper.findChannelFromEnergy(roi.getEndEnergy(), roi.getSpectrum().getEnergy_per_channel());
-        double[] E = Arrays.copyOfRange(roi.getSpectrum().getEnergy_per_channel(), channelBeg, channelEnd+1);
-        double[] y = Arrays.copyOfRange(roi.getSpectrum().getCounts(), channelBeg, channelEnd+1);
-        double[] background = Arrays.copyOfRange(roi.getBackgroundSpectrum().getCounts(), channelBeg, channelEnd+1);
-
-        //Guess initial Parameters
-        double[] start = new double[2 + 4 * (roi.peaks.length)];
-        double[] muSet = new double[roi.peaks.length];
-        double[] Aset = new double[roi.peaks.length];
-        start[0] = (background[0]+background[background.length-1]) / 2 ; //Baseline
-        start[1] = roi.getSpectrum().getFwhmForNumber(Helper.findChannelFromEnergy(roi.peaks[0].getPeakCenter(), roi.getSpectrum().getEnergy_per_channel())) / 2.35; //Sigma
-        for (int i = 0; i < roi.peaks.length; i++) {
-            start[2 + 4 * i] = roi.getSpectrum().getCounts()[Helper.findChannelFromEnergy(roi.peaks[i].getPeakCenter(), roi.getSpectrum().getEnergy_per_channel())]-start[0]; //Amplitude
-            Aset[i] = roi.getSpectrum().getCounts()[Helper.findChannelFromEnergy(roi.peaks[i].getPeakCenter(), roi.getSpectrum().getEnergy_per_channel())]-start[0];
-            start[3 + 4 * i] = roi.peaks[i].getPeakCenter(); //Mu
-            muSet[i] = roi.peaks[i].getPeakCenter(); //Store mu for projection
-            start[4 + 4 * i] = 0.5; //Relative Tailing Amplitude
-            start[5 + 4 * i] = 1.5; //Gradient of Tailing
-        }
-
-        
-        double bSet = (background[0]+background[background.length-1]) / 2;
-        int maxIter = 100;
-
-        double[]params = fit(E, y, start, maxIter, bSet, muSet, Aset, calculateWeight(E, y, muSet, 4.5, 2.0, start[1]));
-        System.out.println("Starting parameters: " + Arrays.toString(start));
-        roi.setFitParams(params);
-        System.out.println("Fitted parameters: " + Arrays.toString(params)+"\n");
-        return params;
     }
 }

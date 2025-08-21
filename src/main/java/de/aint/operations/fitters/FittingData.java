@@ -16,6 +16,7 @@ public class FittingData{
         static final boolean sgEraseOutliers = false;
         static final int sgPolynomialDegree = 2;
         static final double gaussSigma = 3.0;
+        //PEAKFITTING-VALUES
         
 
     }
