@@ -7,6 +7,8 @@ import io.javalin.http.UploadedFile;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -17,6 +19,8 @@ import de.aint.builders.SpectrumBuilder;
 import de.aint.detectors.PeakDetection;
 
 public class Api {
+
+    private static final Logger logger = LoggerFactory.getLogger(Api.class);
 
     static Spectrum spec = null;
     //Get Spectra variants
@@ -39,7 +43,7 @@ public class Api {
 
         
         //Start Javalin Server
-        System.out.println("Started Javalin server on port 7000");
+        logger.info("Started Javalin Server on localhost:7000");
 
         Javalin app = Javalin.create(config -> {
             config.bundledPlugins.enableCors(cors -> {
