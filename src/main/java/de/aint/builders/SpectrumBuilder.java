@@ -9,6 +9,8 @@ import de.aint.readers.IsotopeReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.apache.commons.math3.special.Erf;
+
 public abstract class SpectrumBuilder {
 
     //=====================PEAK_FITTING======================================
@@ -21,10 +23,12 @@ public abstract class SpectrumBuilder {
     boolean[] touched = new boolean[n];                 // welche Bins wurden von irgendeiner ROI beschrieben?
 
     for (ROI roi : rois) {
-        double[] p = SumGaussNumeric.fitGaussToROI(roi);   // p = [B, σ, A1, μ1, A2, μ2, ...]
+        
+        double[] p = SumGaussNumeric.fitGaussToROI(roi);   // p = [B, σ, A1, μ1, T1, G1, A2, μ2, T2, G2, ...]
+
         double B   = p[0];
         double sigma = p[1];
-        int nPeaks = (p.length - 2) / 2;
+        int nPeaks = (p.length - 2) / 4;
 
         // Kanalgrenzen der ROI (inklusive Ende!)
         int i0 = Helper.findChannelFromEnergy(roi.getStartEnergy(), energies);
@@ -39,10 +43,17 @@ public abstract class SpectrumBuilder {
             double Ei = energies[i];    // *** Energie in keV, nicht der Kanalindex! ***
             double sumPeaks = 0.0;
             for (int k = 0; k < nPeaks; k++) {
-                double A  = p[2 + 2*k];
-                double mu = p[3 + 2*k];
+                double A  = p[2 + 4*k];
+                double mu = p[3 + 4*k];
+                double T  = p[4 + 4*k];
+                double G  = p[5 + 4*k];
                 double z  = Ei - mu;
-                sumPeaks += A * Math.exp(- z*z * inv2s2);
+                double delta = Math.sqrt(2) * sigma;
+
+                double base = Math.exp(- z*z * inv2s2);
+                double tail = 0.5 * T * Math.exp(z / (G * delta)) * Erf.erfc((z / delta) + 1.0 / (2.0 * G));
+
+                sumPeaks += A * (base + tail);
             }
             // Nur die Peak-Summe ablegen; Baseline separat behandeln (s.u.)
             fitCurve[i] += sumPeaks+B;    // additiv erlaubt Überlappung mehrerer ROIs

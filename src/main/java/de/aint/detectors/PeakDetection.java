@@ -56,14 +56,14 @@ public class PeakDetection {
             ArrayList<Peak> currentPeaks = new ArrayList<>();
             Peak peak = peaks.remove(0);
             double FWHM = spec.getFwhmForNumber(Helper.findChannelFromEnergy(peak.getPeakCenter(), spec.getEnergy_per_channel()));
-            double startEnergy = Math.max(0, peak.getPeakCenter() - FWHM / 2);
-            double endEnergy = Math.min(spec.getEnergy_per_channel()[spec.getChannel_count() - 1], peak.getPeakCenter() + FWHM / 2);
+            double startEnergy = Math.max(0, peak.getPeakCenter() - FWHM);
+            double endEnergy = Math.min(spec.getEnergy_per_channel()[spec.getChannel_count() - 1], peak.getPeakCenter() + FWHM);
             currentPeaks.add(peak);
 
             while(!peaks.isEmpty() && peaks.get(0).getPeakCenter() < endEnergy) {
                 Peak nextPeak = peaks.remove(0);
                 FWHM = spec.getFwhmForNumber(Helper.findChannelFromEnergy(nextPeak.getPeakCenter(), spec.getEnergy_per_channel()));
-                endEnergy = Math.min(spec.getEnergy_per_channel()[spec.getChannel_count() - 1], nextPeak.getPeakCenter() + FWHM / 2);
+                endEnergy = Math.min(spec.getEnergy_per_channel()[spec.getChannel_count() - 1], nextPeak.getPeakCenter() + FWHM);
                 currentPeaks.add(nextPeak);
             }
 

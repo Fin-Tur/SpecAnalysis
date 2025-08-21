@@ -97,7 +97,7 @@ public class Api {
                 customSpectrum = SpectrumBuilder.createCustomSpectrum(variants[3], selectedIsotopes, isotopeReader);
             }else if(source.equals("peaks")){
                 ROI[] rois = PeakDetection.splitSpectrumIntoRois(variants[0]);
-                ROI[] testROIS = Arrays.copyOfRange(rois, 3, rois.length-4);
+                ROI[] testROIS = Arrays.copyOfRange(rois, 0, rois.length-2);
                 customSpectrum = SpectrumBuilder.createPeakFitSpectrum(variants[3], testROIS);
             }
            
