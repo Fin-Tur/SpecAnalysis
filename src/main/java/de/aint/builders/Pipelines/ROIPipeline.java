@@ -61,9 +61,7 @@ public final class ROIPipeline {
             @Override
             public ROI[] process(ROI[] input) throws ProcessException {
                 for (ROI roi : input) {
-                    for (Peak peak : roi.getPeaks()) {
-                        peak.setAreaOverBackground();
-                    }
+                    roi.setAreaOverBackground();
                 }
                 logger.info("Area Over Background Calculation Successful!");
                 return input;
