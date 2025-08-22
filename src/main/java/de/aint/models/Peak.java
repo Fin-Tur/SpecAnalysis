@@ -34,7 +34,7 @@ public class Peak {
         
 
         public void setAreaOverBackground() {
-            //this.areaOverBackground = Calculator.AreaAlgos.GAUSS.calculateArea(this);
+            //TODO
         }
 
         public void setEstimatedIsotope(Isotop isotope) {

@@ -3,7 +3,15 @@ package de.aint.models;
 import java.util.*;
 import java.util.stream.IntStream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
+
 public class Spectrum {
+    
+    private static final Logger logger = LoggerFactory.getLogger(Spectrum.class);
+
     
     //Peak width increasement given by shape_cal(keV) // x^0, x^1, x^2
     static final double[] shape_cal = {1.14618E-3, 7.58067E-3, 4.98421E-7};
@@ -79,6 +87,7 @@ public class Spectrum {
     this.ec_offset = offset;
     this.ec_slope = slope;
     this.convertChannelsToEnergy();
+    logger.info("Changed Spectrum's energy calibration.");
 }
 
 

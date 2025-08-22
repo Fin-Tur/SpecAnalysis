@@ -12,6 +12,8 @@ import org.apache.commons.math3.linear.DecompositionSolver;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.aint.libraries.SmoothingLib;
 import de.aint.models.ROI;
@@ -22,7 +24,7 @@ import de.aint.operations.Helper;
 
 public abstract class Fitter {
 
-
+    private static final Logger logger = LoggerFactory.getLogger(Fitter.class);
 
 //INTERFACE FOR FITTING ALGORITHMS
  interface FitAlgo {
@@ -124,6 +126,8 @@ private static class RunAlgos{
         double bSet = (background[0]+background[background.length-1]) / 2;
         int maxIter = 100;
 
+        logger.info("Fitting Gaussian to ROI with {} peaks", roi.getPeaks().length);
+
         return LMPeakFitting.fit(E, y, start, maxIter, bSet, muSet, Aset, LMPeakFitting.calculateWeight(E, y, muSet, 4.5, 2.0, start[1]));
 
     }
@@ -153,7 +157,7 @@ private static class RunAlgos{
             }
             newCounts[i] = smoothedValue;
         }
-
+        logger.info("Smoothed spectrum using Gaussian with sigma {}", sigma);
         return newCounts;
     }
 
@@ -205,7 +209,7 @@ private static class RunAlgos{
             half_window = (window_size-1)/2;
         }
 
-
+        logger.info("Smoothed spectrum using Savitzky-Golay with window size {} and polynomial degree {}", window_size, polynomial_degree);
         return smoothed_counts;
 
     }
@@ -252,7 +256,7 @@ private static class RunAlgos{
             if (delta < 1e-6) break;
 
         }
-
+        logger.info("Estimated background using ALS");
         return background;
     }
 
@@ -331,7 +335,7 @@ private static class RunAlgos{
             if (diff < data.p) break;
             weights = newWeights;
         }
-
+        logger.info("Estimated background using ARPLS");
         return background.toArray();
     }
 
@@ -348,6 +352,7 @@ private static class RunAlgos{
                 background[i] = 0; // Avoid log(0)
             }
         }
+        logger.info("Estimated background using Fast ALS");
         return background;
     }
 

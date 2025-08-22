@@ -7,8 +7,12 @@ import de.aint.readers.IsotopeReader;
 import java.util.ArrayList;
 
 import org.apache.commons.math3.special.Erf;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SpectrumBuilder {
+
+    private static final Logger logger = LoggerFactory.getLogger(SpectrumBuilder.class);
 
     private SpectrumBuilder() {
         // private constructor to prevent instantiation
@@ -64,6 +68,7 @@ public class SpectrumBuilder {
 
        double[] composed = spec.getCounts().clone();
        for (int i = 0; i < n; i++) if (touched[i]) composed[i] = fitCurve[i];
+       logger.info("Created peak-fitted Spectrum.");
        return new Spectrum(energies, composed);
 }
 
@@ -83,6 +88,7 @@ public class SpectrumBuilder {
         }
 
         Spectrum customSpectrum = new Spectrum(spectrum.getEnergy_per_channel(), counts);
+        logger.info("Created custom Spectrum.");
         return customSpectrum;
     }
 
@@ -90,6 +96,7 @@ public class SpectrumBuilder {
 
     public static Spectrum createBackgroundSpectrum(Spectrum spec) {
         FittingData fitData = new FittingData(spec);
+        logger.info("Created background Spectrum.");
         return new Spectrum(spec.getEnergy_per_channel(), Fitter.BackgroundFitAlgos.ALS_FAST.fit(fitData));
     }
 
@@ -113,6 +120,7 @@ public class SpectrumBuilder {
         }
 
         double[] newCounts = Fitter.SmoothingFitAlgos.SG.fit(data);
+        logger.info("Created smoothed Spectrum using Savitzky-Golay.");
         return new Spectrum(spec.getEnergy_per_channel(), newCounts);
     }
 
@@ -125,6 +133,7 @@ public class SpectrumBuilder {
         }
         
         double[] new_counts = Fitter.SmoothingFitAlgos.GAUSS.fit(data);
+        logger.info("Created smoothed Spectrum using Gaussian.");
         return new Spectrum(spec.getEnergy_per_channel(), new_counts);
     }
 

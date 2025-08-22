@@ -6,7 +6,12 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class IsotopeReader {
+
+    private static final Logger logger = LoggerFactory.getLogger(IsotopeReader.class);
 
     private String filePath;
     public ArrayList<Isotop> isotopes = new ArrayList<>();
@@ -35,7 +40,7 @@ public class IsotopeReader {
             
 
         } catch(Exception e) {
-            e.printStackTrace();    
+            logger.error("Error reading isotopes from file: {}", filePath, e);
 
         }
     }

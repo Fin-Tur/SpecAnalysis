@@ -8,8 +8,13 @@ import de.aint.readers.IsotopeReader;
 
 import java.util.ArrayList;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public class PeakDetection {
+
+    private static final Logger logger = LoggerFactory.getLogger(PeakDetection.class);
 
     public static ArrayList<Peak> detectPeaks(Spectrum spec){
 
@@ -44,6 +49,7 @@ public class PeakDetection {
 
 
         //Return peaks
+        logger.info("Detected {} peaks in spectrum and matched isotopes", peaks.size());
         return peaks;
     }
 
@@ -70,6 +76,7 @@ public class PeakDetection {
             rois.add(new ROI(spec, currentPeaks.toArray(new Peak[0]), startEnergy, endEnergy));
         }
 
+        logger.info("Split spectrum into {} ROIs", rois.size());
         return rois.toArray(new ROI[0]);
     }
  
