@@ -105,7 +105,7 @@ private static class RunAlgos{
         int channelEnd = Helper.findChannelFromEnergy(roi.getEndEnergy(), roi.getSpectrum().getEnergy_per_channel());
         double[] E = Arrays.copyOfRange(roi.getSpectrum().getEnergy_per_channel(), channelBeg, channelEnd+1);
         double[] y = Arrays.copyOfRange(roi.getSpectrum().getCounts(), channelBeg, channelEnd+1);
-        double[] background = Arrays.copyOfRange(roi.getBackgroundSpectrum().getCounts(), channelBeg, channelEnd+1);
+        double[] background = Arrays.copyOfRange(roi.getSpectrum().getBackgroundCounts(), channelBeg, channelEnd+1);
 
         //Guess initial Parameters
         double[] start = new double[2 + 4 * (roi.getPeaks().length)];

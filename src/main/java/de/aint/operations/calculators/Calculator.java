@@ -2,6 +2,8 @@ package de.aint.operations.calculators;
 
 import java.util.Arrays;
 
+import org.apache.commons.math3.special.Erf;
+
 import de.aint.models.ROI;
 import de.aint.models.Spectrum;
 import de.aint.operations.Helper;
@@ -95,16 +97,37 @@ public class Calculator {
     //================ AREA WITH GAUSS===============================
         private static double calculateAreaUsingGauss(ROI roi) {
 
+            int startChannel = Helper.findChannelFromEnergy(roi.getStartEnergy(), roi.getSpectrum().getEnergy_per_channel());
+            int endChannel = Helper.findChannelFromEnergy(roi.getEndEnergy(), roi.getSpectrum().getEnergy_per_channel());
+
             double[] params = Fitter.PeakFitAlgos.GAUSSLM.fit(roi);
+            double[] E = roi.getSpectrum().getEnergy_per_channel();
+            double[] counts = roi.getSpectrum().getCounts();
 
-            // The area under the Gaussian is given by the formula:
-            // Area = A * sqrt(2 * pi) * sigma
-            double amplitude = params[0];
-            double mean = params[1];
-            double sigma = params[2];
+            double sigma = params[1];
+            double inv2s2 = 1.0 / (2.0 * sigma * sigma);
 
-            //Returns Area
-            return amplitude * Math.sqrt(2 * Math.PI) * sigma;
+            int nPeaks = (params.length - 2) / 4;
+
+            double area = 0.0;
+
+            for(int i = 0; i < nPeaks; i++) {
+                int offset = 2 + i * 4;
+                double A = params[offset];
+                double mu = params[offset + 1];
+                double T = params[offset + 2];
+                double G = params[offset + 3];
+                double delta = Math.sqrt(2)*sigma;
+
+                for(int channel = startChannel; channel <= endChannel; channel++) {
+
+                    double z  = E[i] - mu;
+                    double core = Math.exp(-z*z * inv2s2);
+                    double tail = 0.5*T * Math.exp(z / (G * delta)) * Erf.erfc((z / delta) + 1.0 / (2.0 * G));
+                    area += A * (core + tail); 
+                }
+            }
+            return area;
 
         }
 

@@ -6,6 +6,9 @@ import java.util.stream.IntStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.aint.operations.fitters.Fitter;
+import de.aint.operations.fitters.FittingData;
+
 
 
 public class Spectrum {
@@ -25,6 +28,8 @@ public class Spectrum {
     //srcForce in n/s || mcnp = cpunt*this
     private float srcForce = 1;
 
+    private double[] backgroundCounts;
+
     //Variables for channel - energy calculation
     private double ec_offset;
     private double ec_slope;
@@ -38,6 +43,7 @@ public class Spectrum {
         this.ec_quad = ec_quad;
         energy_per_channel = new double[counts.length];
         this.convertChannelsToEnergy();
+        this.backgroundCounts = Fitter.BackgroundFitAlgos.ALS_FAST.fit(new FittingData(this));
     }
     //Overloading for mncp specs
     public Spectrum(double[] energy, double[] counts){
@@ -47,6 +53,7 @@ public class Spectrum {
         this.ec_slope = 0;
         this.ec_quad = 0;
         this.energy_per_channel = Arrays.copyOf(energy, energy.length);
+        this.backgroundCounts = Fitter.BackgroundFitAlgos.ALS_FAST.fit(new FittingData(this));
     }
 
     //Function to channel data
@@ -114,5 +121,9 @@ public class Spectrum {
 
     public double getFwhmForNumber(int channel){ // Full Width at Half Maximum
         return shape_cal[0] + shape_cal[1] * channel + shape_cal[2] * channel * channel;
+    }
+
+    public double[] getBackgroundCounts() {
+        return this.backgroundCounts;
     }
 }

@@ -4,7 +4,7 @@ package de.aint.models;
 public class Peak {
 
         private final double peakCenter;
-        private double areaOverBackground;
+
         private String estimatedIsotope = null;
         private Isotop matchedIsotope = null;
 
@@ -25,17 +25,7 @@ public class Peak {
             return matchedIsotope;
         }
 
-        public double getAreaOverBackground() {
-            return areaOverBackground;
-        }
-
-
         //Setters
-        
-
-        public void setAreaOverBackground() {
-            //TODO
-        }
 
         public void setEstimatedIsotope(Isotop isotope) {
             if(isotope == null) {
