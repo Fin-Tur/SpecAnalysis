@@ -34,12 +34,6 @@ public class ROI {
     }
 
     //Setter
-    public void setStartEnergy(double startEnergy) {
-        this.startEnergy = startEnergy;
-    }
-    public void setEndEnergy(double endEnergy) {
-        this.endEnergy = endEnergy;
-    }
     public void fitGaussCurve() {
         this.fitParams = Fitter.PeakFitAlgos.GAUSSLM.fit(this);// Fit the peaks in the ROI using the GAUSS-LM algorithm
     }
@@ -52,8 +46,6 @@ public class ROI {
         this.startEnergy = startEnergy;
         this.endEnergy = endEnergy;
 
-        //PeakDetection.detectAndSetPeakSizeUsingGradient(this, 3);
-        //PeakDetection.detectAndSetPeakSizeUsingFWHM(this, 1);
     }
 
 

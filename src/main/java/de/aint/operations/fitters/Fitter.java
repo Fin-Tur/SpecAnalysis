@@ -93,42 +93,6 @@ public enum PeakFitAlgos implements PeakFitAlgo {
 
 private static class RunAlgos{
 
-    //================================================GAUSS-PEAK-FITTER===================================================
-    // !!! returns Gauss Curve params !!!
-    /*private static double[] fitGaussCurveToRoi(ROI roi){
-        double[] counts = roi.getSpectrum().getCounts();
-        int startChannel = Helper.findChannelFromEnergy(roi.getStartEnergy(), roi.getSpectrum().getEnergy_per_channel());
-        int endChannel = Helper.findChannelFromEnergy(roi.getEndEnergy(), roi.getSpectrum().getEnergy_per_channel());
-        int centerChannel = Helper.findChannelFromEnergy(roi.getPeakCenter(), roi.getSpectrum().getEnergy_per_channel());
-
-        int len = endChannel - startChannel;
-        if(len == 0) len = 1;
-        System.out.println(len);
-
-        //Create a Gaussian fitter
-        ArrayList<WeightedObservedPoint> obs = new ArrayList<>();
-        for (int i = startChannel; i <= endChannel; i++) {
-            if (i >= 0 && i < counts.length) {
-                double weight = 1 - (Math.abs(centerChannel - i)/(len/2.0));
-                System.out.println("Weight: "+weight);
-                WeightedObservedPoint point = new WeightedObservedPoint(weight, i, counts[i]);
-                obs.add(point);
-            }
-        }
-        GaussianCurveFitter fitter = GaussianCurveFitter.create().withMaxIterations(100000);
-        // Fit the Gaussian curve to the observed points
-        double[] gaussParams = {0, roi.getPeakCenter(), 1};
-
-        try{
-            gaussParams = fitter.fit(obs);
-        }catch(Exception e){
-            System.err.println("Error fitting Gaussian curve: " + e.getMessage());
-        }
-           
-        
-
-        return gaussParams;
-    }*/
 
     //=================================================LM-GAUSS-PEAK-FITTER==================================================
     // !!! return params [B, sigma, A1, mu1, T1, G1, ..., An, mun, Tn, Gn] !!!

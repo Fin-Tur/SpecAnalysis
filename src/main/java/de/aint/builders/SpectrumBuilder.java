@@ -19,29 +19,28 @@ public class SpectrumBuilder {
     double[] energies = spec.getEnergy_per_channel();   // E[i] in keV
     int n = energies.length;
 
-    // separate Fit-Kurve, damit das Original unangetastet bleibt
-    double[] fitCurve = new double[n];                  // nur die Summe der Gauss-Beiträge
-    boolean[] touched = new boolean[n];                 // welche Bins wurden von irgendeiner ROI beschrieben?
+    //original untouched
+    double[] fitCurve = new double[n];                  // sum of gaussians
+    boolean[] touched = new boolean[n];                 //which bins r written to
 
     for (ROI roi : rois) {
-        roi.fitGaussCurve(); // Fit the peaks in the ROI using the GAUSS-LM algorithm
-        double[] p = roi.getFitParams();   // p = [B, σ, A1, μ1, T1, G1, A2, μ2, T2, G2, ...]
+        roi.fitGaussCurve(); //Fit the peaks in the ROI using the GAUSS-LM algorithm
+        double[] p = roi.getFitParams(); // p = [B, σ, A1, μ1, T1, G1, A2, μ2, T2, G2, ...]
 
         double B   = p[0];
         double sigma = p[1];
         int nPeaks = (p.length - 2) / 4;
 
-        // Kanalgrenzen der ROI (inklusive Ende!)
-        int i0 = Helper.findChannelFromEnergy(roi.getStartEnergy(), energies);
-        int i1 = Helper.findChannelFromEnergy(roi.getEndEnergy(),   energies);
-        if (i0 > i1) { int t=i0; i0=i1; i1=t; }
-        i0 = Math.max(0, i0);
-        i1 = Math.min(n-1, i1);
+        int iStart = Helper.findChannelFromEnergy(roi.getStartEnergy(), energies);
+        int iEnd = Helper.findChannelFromEnergy(roi.getEndEnergy(),   energies);
+
+        iStart = Math.max(0, iStart);
+        iEnd = Math.min(n-1, iEnd);
 
         double inv2s2 = 1.0 / (2.0 * sigma * sigma);
 
-        for (int i = i0; i <= i1; i++) {
-            double Ei = energies[i];    // *** Energie in keV, nicht der Kanalindex! ***
+        for (int i = iStart; i <= iEnd; i++) {
+            double Ei = energies[i];
             double sumPeaks = 0.0;
             for (int k = 0; k < nPeaks; k++) {
                 double A  = p[2 + 4*k];
@@ -56,23 +55,15 @@ public class SpectrumBuilder {
 
                 sumPeaks += A * (base + tail);
             }
-            // Nur die Peak-Summe ablegen; Baseline separat behandeln (s.u.)
-            fitCurve[i] += sumPeaks+B;    // additiv erlaubt Überlappung mehrerer ROIs
+
+            fitCurve[i] += sumPeaks+B; 
             touched[i] = true;
         }
 
-        //for (int i = i0; i <= i1; i++) fitCurve[i] += B;
     }
 
-    // Variante A (empfohlen fürs Plotten):
-    //   Rückgabe eines Spektrums, das NUR die fit-Kurve enthält (zum Overlay).
-    //   Im Plot: Original (spec.counts) + Overlay (fitCurve) zeichnen.
-    //Spectrum fittedCurves = new Spectrum(energies, fitCurve);
-    //return CalculatingAlgos.ADDITION.calculate(spec, fittedCurves);
-
-    // Variante B (synthetisches "gefitttes" Spektrum):
        double[] composed = spec.getCounts().clone();
-       for (int i = 0; i < n; i++) if (touched[i]) composed[i] = fitCurve[i]; // oder composed[i] = Math.max(composed[i], fitCurve[i]);
+       for (int i = 0; i < n; i++) if (touched[i]) composed[i] = fitCurve[i];
        return new Spectrum(energies, composed);
 }
 

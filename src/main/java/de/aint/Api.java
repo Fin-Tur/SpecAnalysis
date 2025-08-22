@@ -82,7 +82,7 @@ public class Api {
         });
 
         app.get("/isotopes", ctx -> {
-            System.out.println(isotopes.size() + " isotopes loaded!");
+            logger.info("{} isotopes loaded!", isotopes.size());
             ctx.json(isotopes);
         });
 
@@ -125,7 +125,11 @@ public class Api {
                 spec = Reader.readFile(tempFile.getAbsolutePath());
                 spec.changeEnergyCal(channels, energies);
                 variants = SpectrumBuilder.createSpectrumVariants(spec);
-                if(!tempFile.delete()) System.out.println("Could not delete temporary file: " + tempFile.getAbsolutePath());
+                try {
+                    java.nio.file.Files.delete(tempFile.toPath());
+                } catch (java.io.IOException e) {
+                    logger.warn("Could not delete temporary file: {}", tempFile.getAbsolutePath(), e);
+                }
                 ctx.json(variants[0]);
             } else {
                 ctx.status(400).result("No file uploaded");
