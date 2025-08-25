@@ -119,40 +119,46 @@ function renderIsotopes(filtered) {
 }
 
 //Render Peaks
-function renderPeaks(peaks){
-    const container = document.getElementById("peakInfo");
-    if(peaks.length == 0) {container.innerText = 'No Peaks found!'; return;}
-    container.innerHTML = peaks.map(peak => 
-        peak.estimatedIsotope == "UNK" ? 
-        `<div class="peak-card-unk">
-            <label style="display:flex;align-items:center;gap:8px;">
-                <span>
-                    <b>${peak.estimatedIsotope}</b>
-                    <br><span style="color:#457b9d;">Energy (keV):</span> ${peak.peakCenter}
-                </span>
-            </label>
-        </div>`
-        :
-        `<div class="peak-card">
-            <label style="display:flex;align-items:center;gap:8px;">
-                <span>
-                    <b>${peak.estimatedIsotope}</b>
-                    <br><span style="color:#457b9d;">Energy (keV):</span> ${peak.peakCenter}
-                    <br><span style="color:#457b9d;">Abundance:</span> ${peak.matchedIsotope.isotope_abundance}
-                </span>
-            </label>
-        </div>`
-    ).join('');
 
-    //List of all found isotopes ex UNK and ANNH
-    const found = Array.from(new Set(
-        peaks
-            .filter(peak => peak.estimatedIsotope && peak.estimatedIsotope !== "UNK" && peak.estimatedIsotope != "ANNH")
-            .map(peak => peak.estimatedIsotope)
-    ));
+function renderPeaks(rois) {
+    const container = document.getElementById("peakInfo");
+    if (!rois || rois.length === 0) {
+        container.innerText = 'No Peaks found!';
+        return;
+    }
+    let foundIsotopes = new Set();
+    container.innerHTML = rois.map(roi => {
+        // ROI-Infos
+        let roiInfo = `<div class="roi-card">
+            <div><b>ROI:</b> ${roi.startEnergy?.toFixed(2)} - ${roi.endEnergy?.toFixed(2)} keV` +
+            (roi.areaOverBackground !== undefined ? ` | <b>Area:</b> ${roi.areaOverBackground.toFixed(2)}` : '') +
+            `</div>`;
+        // Peaks in diesem ROI
+        if (roi.peaks && roi.peaks.length > 0) {
+            roiInfo += roi.peaks.map(peak => {
+                if (peak.estimatedIsotope && peak.estimatedIsotope !== "UNK" && peak.estimatedIsotope !== "ANNH") {
+                    foundIsotopes.add(peak.estimatedIsotope);
+                }
+                return `<div class="peak-card${peak.estimatedIsotope === "UNK" ? "-unk" : ""}">
+                    <label style="display:flex;align-items:center;gap:8px;">
+                        <span>
+                            <b>${peak.estimatedIsotope || "?"}</b>
+                            <br><span style="color:#457b9d;">Energy (keV):</span> ${peak.peakCenter?.toFixed(2) ?? "-"}
+                            ${peak.matchedIsotope && peak.matchedIsotope.isotope_abundance !== undefined ? `<br><span style='color:#457b9d;'>Abundance:</span> ${peak.matchedIsotope.isotope_abundance}` : ''}
+                        </span>
+                    </label>
+                </div>`;
+            }).join('');
+        } else {
+            roiInfo += `<div class="peak-card-unk">No Peaks in ROI</div>`;
+        }
+        roiInfo += `</div>`;
+        return roiInfo;
+    }).join('');
+
     document.getElementById("foundElements").innerHTML =
-        found.length
-            ? `<span id="foundElements-label">Recognized Isotopes:</span> ${found.map(e => `<span class="found-chip">${e}</span>`).join('')}`
+        foundIsotopes.size > 0
+            ? `<span id="foundElements-label">Recognized Isotopes:</span> ${Array.from(foundIsotopes).map(e => `<span class="found-chip">${e}</span>`).join('')}`
             : '';
 }
 

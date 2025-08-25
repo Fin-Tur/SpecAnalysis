@@ -62,44 +62,47 @@ public class LMPeakFitting {
 
     private static double[] project(double[] p, double sigMin, double Bset, double muSet[], double[] Aset){
         double[] q = p.clone();
-        q[0] = clamp(q[0], Bset - Bradius, Bset + Bradius);
+        q[0] = clamp(q[0], Bset - Bradius, Bset); // Clamp radius to negative, 0 to positive side (dont want B++++ sigma---- to happen)
         q[1] = Math.max(p[1], sigMin);
 
-        int nPeaks = (q.length - 2) / 4;
+        int nPeaks = (q.length - 2) / 5;
         for(int i = 0; i < nPeaks; i++) {
-            int offset = 2 + 4*i;
+            int offset = 2 + 5*i;
             q[offset] = clamp(q[offset], Aset[i] - ARangeRadius, Aset[i] + ARangeRadius); // Ensure A doesn't change a lot
             q[offset + 1] = clamp(q[offset + 1], muSet[i] - muRangeRadius, muSet[i] + muRangeRadius); // Ensure mu doesnt change alot
             q[offset + 2] = Math.max(q[offset + 2], 0.3); // Ensure T is non-negative
             q[offset + 3] = Math.max(q[offset + 3], 1e-3); // Ensure G is non-negative
+            q[offset + 4] = Math.max(q[offset + 4], 1e-3); // Ensure S is non-negative
         }
 
         return q;
     }
 
-    //p = [ B, sigma, A1, mu1, T1, G1, A2, mu2, T2, G2, ..., An, mun, Tn, Gn ]
+    //p = [ B, sigma, A1, mu1, T1, G1, S1, A2, mu2, T2, G2, S2, ..., An, mun, Tn, Gn, Sn]
     //Calculates counts for modelled gauss func
     private static double[] value(double[] E, double[] p){
         double B = p[0];
         double sigma = Math.max(p[1], 1e-8);
         double inv2s2 = 1.0 / (2.0 * sigma * sigma); 
-        int numberOfPeaks = (p.length - 2)/4;
+        int numberOfPeaks = (p.length - 2)/5;
 
         double[] newY = new double[E.length];
         for (int i = 0; i < E.length; i++) {
             double sum = B;
             for (int k = 0; k < numberOfPeaks; k++) {
-                double A  = p[2 + 4*k];
-                double mu = p[3 + 4*k];
-                double T  = p[4 + 4*k]; 
-                double G =  p[5 + 4*k];
+                double A  = p[2 + 5*k];
+                double mu = p[3 + 5*k];
+                double T  = p[4 + 5*k]; 
+                double G =  p[5 + 5*k];
+                double S =  p[6 + 5*k];
                 double z  = E[i] - mu;
                 double delta = Math.sqrt(2)*sigma;
 
                 double core = Math.exp(-z*z * inv2s2);
                 double tail = 0.5*T * Math.exp(z / (G * delta)) * Erf.erfc((z / delta) + 1.0 / (2.0 * G));
+                double step = 0.5*S * Erf.erfc((z / delta));
                 //sum += A * core;
-                sum += A * (core + tail); //Add peak contribution);
+                sum += A * (core + tail + step); //Add peak contribution);
 
             }
             newY[i] = sum;
@@ -135,7 +138,7 @@ public class LMPeakFitting {
         };
     }
 
-    //returns p = [B, sigma, A1, mu1, T1, B1, ...]
+    //returns p = [B, sigma, A1, mu1, T1, B1, S1, ...]
     public static double[] fit(double[] E, double[] y, double[] start, int maxIter, double bCap, double[] muSet, double[] Aset, double[] w){
 
 

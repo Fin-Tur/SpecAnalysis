@@ -24,9 +24,8 @@ public class Peak {
         public Isotop getMatchedIsotope(){
             return matchedIsotope;
         }
-
+        
         //Setters
-
         public void setEstimatedIsotope(Isotop isotope) {
             if(isotope == null) {
                 this.estimatedIsotope="unk"; 

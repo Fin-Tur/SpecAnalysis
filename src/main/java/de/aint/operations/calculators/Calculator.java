@@ -3,6 +3,8 @@ package de.aint.operations.calculators;
 import java.util.Arrays;
 
 import org.apache.commons.math3.special.Erf;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.aint.models.ROI;
 import de.aint.models.Spectrum;
@@ -11,6 +13,8 @@ import de.aint.operations.fitters.Fitter;
 import de.aint.operations.fitters.FittingData;
 
 public class Calculator {
+
+    private static final Logger logger = LoggerFactory.getLogger(Calculator.class);
 
     // ======== INTERFACES ==========
 
@@ -107,16 +111,17 @@ public class Calculator {
             double sigma = params[1];
             double inv2s2 = 1.0 / (2.0 * sigma * sigma);
 
-            int nPeaks = (params.length - 2) / 4;
+            int nPeaks = (params.length - 2) / 5;
 
             double area = 0.0;
 
             for(int i = 0; i < nPeaks; i++) {
-                int offset = 2 + i * 4;
+                int offset = 2 + i * 5;
                 double A = params[offset];
                 double mu = params[offset + 1];
                 double T = params[offset + 2];
                 double G = params[offset + 3];
+                double S = params[offset + 4];
                 double delta = Math.sqrt(2)*sigma;
 
                 for(int channel = startChannel; channel <= endChannel; channel++) {
@@ -124,9 +129,11 @@ public class Calculator {
                     double z  = E[i] - mu;
                     double core = Math.exp(-z*z * inv2s2);
                     double tail = 0.5*T * Math.exp(z / (G * delta)) * Erf.erfc((z / delta) + 1.0 / (2.0 * G));
-                    area += A * (core + tail); 
+                    double step = 0.5*S * Erf.erfc((z / delta));
+                    area += A * (core + tail + step);
                 }
             }
+            logger.info("Calculated area using Gauss: {}", area);
             return area;
 
         }

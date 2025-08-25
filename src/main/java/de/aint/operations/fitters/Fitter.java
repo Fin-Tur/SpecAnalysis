@@ -109,18 +109,19 @@ private static class RunAlgos{
         double[] background = Arrays.copyOfRange(roi.getSpectrum().getBackgroundCounts(), channelBeg, channelEnd+1);
 
         //Guess initial Parameters
-        double[] start = new double[2 + 4 * (roi.getPeaks().length)];
+        double[] start = new double[2 + 5 * (roi.getPeaks().length)];
         double[] muSet = new double[roi.getPeaks().length];
         double[] Aset = new double[roi.getPeaks().length];
         start[0] = (background[0]+background[background.length-1]) / 2 ; //Baseline
         start[1] = roi.getSpectrum().getFwhmForNumber(Helper.findChannelFromEnergy(roi.getPeaks()[0].getPeakCenter(), roi.getSpectrum().getEnergy_per_channel())) / 2.35; //Sigma
         for (int i = 0; i < roi.getPeaks().length; i++) {
-            start[2 + 4 * i] = roi.getSpectrum().getCounts()[Helper.findChannelFromEnergy(roi.getPeaks()[i].getPeakCenter(), roi.getSpectrum().getEnergy_per_channel())]-start[0]; //Amplitude
+            start[2 + 5 * i] = roi.getSpectrum().getCounts()[Helper.findChannelFromEnergy(roi.getPeaks()[i].getPeakCenter(), roi.getSpectrum().getEnergy_per_channel())]-start[0]; //Amplitude
             Aset[i] = roi.getSpectrum().getCounts()[Helper.findChannelFromEnergy(roi.getPeaks()[i].getPeakCenter(), roi.getSpectrum().getEnergy_per_channel())]-start[0];
-            start[3 + 4 * i] = roi.getPeaks()[i].getPeakCenter(); //Mu
+            start[3 + 5 * i] = roi.getPeaks()[i].getPeakCenter(); //Mu
             muSet[i] = roi.getPeaks()[i].getPeakCenter(); //Store mu for projection
-            start[4 + 4 * i] = 0.5; //Relative Tailing Amplitude
-            start[5 + 4 * i] = 1.5; //Gradient of Tailing
+            start[4 + 5 * i] = 0.5; //Relative Tailing Amplitude
+            start[5 + 5 * i] = 1.5; //Gradient of Tailing
+            start[6 + 5 * i] = 0.05; //Tailing Amplitude
         }
 
         

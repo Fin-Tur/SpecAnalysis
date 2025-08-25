@@ -7,6 +7,7 @@ import io.javalin.http.UploadedFile;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 
 import org.slf4j.Logger;
@@ -15,6 +16,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import de.aint.models.*;
 import de.aint.operations.fitters.FittingData;
@@ -42,7 +45,8 @@ public class Api {
         HashMap<String, Spectrum> spectrumCache = new HashMap<>();
 
         //get Isotopes
-        IsotopeReader isotopeReader = new IsotopeReader("C:\\Users\\f.willems\\Projects\\SpecAnalysis\\src\\main\\resources\\isotop_details.txt");
+        Path isoPath = Paths.get("src/main/resources/isotop_details.txt");
+        IsotopeReader isotopeReader = new IsotopeReader(isoPath.toString());
         isotopeReader.readIsotopes();
         ArrayList<Isotop> isotopes = isotopeReader.isotopes;
 
@@ -117,16 +121,19 @@ public class Api {
                 customSpectrum = SpectrumBuilder.createCustomSpectrum(variants[3], selectedIsotopes, isotopeReader);
             }else if(source.equals("peaks")){
                 ROI[] rois = PeakDetection.splitSpectrumIntoRois(variants[0]);
-                ROI[] testROIS = Arrays.copyOfRange(rois, 0, rois.length-2);
-                customSpectrum = SpectrumBuilder.createPeakFitSpectrum(variants[3], testROIS);
+                customSpectrum = SpectrumBuilder.createPeakFitSpectrum(variants[3], rois);
             }
            
             ctx.json(customSpectrum);
         });
 
         app.get("/peaks", ctx -> {
-            Peak[] peaks = PeakDetection.detectPeaks(variants[0]).toArray(new Peak[0]);
-            ctx.json(peaks);
+            ROI[] rois = PeakDetection.splitSpectrumIntoRois(variants[0]);
+            for(var roi : rois) roi.setAreaOverBackground();
+            RoiDTO[] rdtos = Arrays.stream(rois)
+                    .map(RoiDTO::new)
+                    .toArray(RoiDTO[]::new);
+            ctx.json(rdtos);
         });
 
         app.post("/", ctx -> {

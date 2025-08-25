@@ -40,7 +40,7 @@ public class SpectrumBuilder {
 
         double B   = p[0];
         double sigma = p[1];
-        int nPeaks = (p.length - 2) / 4;
+        int nPeaks = (p.length - 2) / 5;
 
         int iStart = Helper.findChannelFromEnergy(roi.getStartEnergy(), energies);
         int iEnd = Helper.findChannelFromEnergy(roi.getEndEnergy(),   energies);
@@ -54,17 +54,19 @@ public class SpectrumBuilder {
             double Ei = energies[i];
             double sumPeaks = 0.0;
             for (int k = 0; k < nPeaks; k++) {
-                double A  = p[2 + 4*k];
-                double mu = p[3 + 4*k];
-                double T  = p[4 + 4*k];
-                double G  = p[5 + 4*k];
+                double A  = p[2 + 5*k];
+                double mu = p[3 + 5*k];
+                double T  = p[4 + 5*k];
+                double G  = p[5 + 5*k];
+                double S  = p[6 + 5*k];
                 double z  = Ei - mu;
                 double delta = Math.sqrt(2) * sigma;
 
                 double base = Math.exp(- z*z * inv2s2);
                 double tail = 0.5 * T * Math.exp(z / (G * delta)) * Erf.erfc((z / delta) + 1.0 / (2.0 * G));
+                double step = 0.5 * S * Erf.erfc((z / delta));
 
-                sumPeaks += A * (base + tail);
+                sumPeaks += A * (base + tail + step);
             }
 
             fitCurve[i] += sumPeaks+B; 

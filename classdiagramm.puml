@@ -1,0 +1,311 @@
+@startuml
+skinparam classAttributeIconSize 0
+hide empty members
+package "de.aint" {
+class Api {
+  ~ smoothed : Spectrum
+  ~ backgroundSpectrum : Spectrum
+  + {static} main(args : String[]) : void
+}
+class Main {
+  + {static} main(args : String[]) : void
+}
+}
+package "de.aint.builders" {
+class SpectrumBuilder {
+
+  ~ customSpectrum : return
+  ~ variants : return
+  ~ SpectrumBuilder() : private
+  + {static} createPeakFitSpectrum(spec : Spectrum, rois : ROI[]) : Spectrum
+  + {static} createCustomSpectrum(spectrum : Spectrum, selectedIsotopesAsIDString : ArrayList&lt;String&gt;, isotopeReader : IsotopeReader) : Spectrum
+  + {static} createBackgroundSpectrum(spec : Spectrum) : Spectrum
+  + {static} createSmoothedSpectrumUsingSG(spec : Spectrum, window_size : int, polynomial_degree : int, eraseOutliers : boolean, iterations : int) : Spectrum
+  + {static} createSmoothedSpectrumUsingGauss(spec : Spectrum, sigma : double) : Spectrum
+  + {static} createSpectrumVariants(spec : Spectrum) : Spectrum[]
+  - SpectrumBuilder()
+}
+}
+package "de.aint.builders.Pipelines" {
+class ProcessException {
+  ~ ProcessException(t : Throwable) : public
+  + ProcessException(t : Throwable)
+}
+class ROIPipeline {
+  ~ ROIPipeline() : private
+  + {static} specToRois() : Process&lt;Spectrum, ROI[]&gt;
+  + process(input : Spectrum) : ROI[]
+  + {static} matchIsotopes() : Process&lt;ROI[], ROI[]&gt;
+  + process(input : ROI[]) : ROI[]
+  + {static} fitPeaks() : Process&lt;ROI[], ROI[]&gt;
+  + process(input : ROI[]) : ROI[]
+  + {static} setAreaOverBackground() : Process&lt;ROI[], ROI[]&gt;
+  + process(input : ROI[]) : ROI[]
+  - ROIPipeline()
+}
+}
+package "de.aint.detectors" {
+class MatchPeakWithIsotop {
+  - {static} matches_energy(roi_energy : double, isotop_energy : double, tolerance : double) : boolean
+  - {static} matches_intensity(roi_intensity : double, isotop_intensity : double, tolerance : double) : boolean
+  + {static} matchRoiWithIsotop(peak : Peak, isoReader : IsotopeReader, tolerance : double) : Isotop
+}
+class PeakDetection {
+  + {static} detectPeaks(spec : Spectrum) : ArrayList&lt;Peak&gt;
+  + {static} splitSpectrumIntoRois(spec : Spectrum) : ROI[]
+}
+}
+package "de.aint.libraries" {
+interface SmoothingLib {
+  ~ estimate_background_als(counts : double[], n : int, lambda : double, p : double, maxIterations : int, out : double[]) : int
+}
+}
+package "de.aint.models" {
+class Isotop {
+  + id : String
+  + symbol : String
+  + energy : double
+  + intensity : double
+  + isotope_abundance : double
+  + Isotop(id : String, symbol : String, energy : double, intensity : double, isotope_abundance : double)
+}
+class Peak {
+  - peakCenter : double
+  ~ Peak(peakCenter : double) : public
+  + getPeakCenter() : double
+  + getEstimatedIsotope() : String
+  + getMatchedIsotope() : Isotop
+  + setEstimatedIsotope(isotope : Isotop) : void
+  + Peak(peakCenter : double)
+}
+class ROI {
+  - peaks : Peak[]
+  - fitParams : double[]
+  - areaOverBackground : double
+  - spectrum : Spectrum
+  - startEnergy : double
+  - endEnergy : double
+  + getSpectrum() : Spectrum
+  + getStartEnergy() : double
+  + getEndEnergy() : double
+  + getFitParams() : double[]
+  + getPeaks() : Peak[]
+  + getAreaOverBackground() : double
+  + fitGaussCurve() : void
+  + setAreaOverBackground() : void
+  + ROI(spec : Spectrum, peaks : Peak[], startEnergy : double, endEnergy : double)
+}
+class Spectrum {
+  - counts : double[]
+  - channel_count : int
+  - energy_per_channel : double[]
+  - backgroundCounts : double[]
+  - ec_offset : double
+  - ec_slope : double
+  - ec_quad : double
+  ~ Spectrum(counts : double[], ec_offset : double, ec_slope : double, ec_quad : double) : public
+  ~ Spectrum(energy : double[], counts : double[]) : public
+  - convertChannelsToEnergy() : void
+  + normalizeCounts() : void
+  + changeEnergyCal(channels : int[], energies : double[]) : void
+  + setBackgroundCounts() : void
+  + setSrcForce(cntMult : float) : void
+  + getSrcForce() : float
+  + getCounts() : double[]
+  + getEnergy_per_channel() : double[]
+  + getChannel_count() : int
+  + getFwhmForNumber(channel : int) : double
+  + getBackgroundCounts() : double[]
+  + Spectrum(counts : double[], ec_offset : double, ec_slope : double, ec_quad : double)
+  + Spectrum(energy : double[], counts : double[])
+}
+}
+package "de.aint.operations" {
+class Helper {
+  + {static} findChannelFromEnergy(energy : double, eRanges : double[]) : int
+  + {static} createFittingEnergyLevels(energy1 : double[], energy2 : double[], channel_count : int) : double[]
+}
+}
+package "de.aint.operations.calculators" {
+enum AreaAlgos {
+  + calculateArea(roi : ROI) : double
+  + calculateArea(roi : ROI) : double
+}
+interface AreaCalculations {
+  ~ calculateArea(roi : ROI) : double
+}
+enum CalculatingAlgos {
+  + calculate(spec1 : Spectrum, spec2 : Spectrum) : Spectrum
+  + calculate(spec1 : Spectrum, spec2 : Spectrum) : Spectrum
+}
+class Calculator {
+  ~ calculate(spec1 : Spectrum, spec2 : Spectrum) : Spectrum
+  ~ calculateArea(roi : ROI) : double
+  + calculate(spec1 : Spectrum, spec2 : Spectrum) : Spectrum
+  + calculate(spec1 : Spectrum, spec2 : Spectrum) : Spectrum
+  + calculateArea(roi : ROI) : double
+  + calculateArea(roi : ROI) : double
+  - {static} add(spec1 : Spectrum, spec2 : Spectrum) : Spectrum
+  - {static} subtract(spec1 : Spectrum, spec2 : Spectrum) : Spectrum
+  - {static} calculateAreaUsingGauss(roi : ROI) : double
+  + {static} calculateAreaUsingCounts(roi : ROI) : double
+}
+class CalculatorHelper {
+  + {static} numericOperationOnEqualCalibrations(spec1 : Spectrum, spec2 : Spectrum, channel_count : int, isAddition : boolean) : Spectrum
+  + {static} numericOperationOnDiverseCalibrations(spec1 : Spectrum, spec2 : Spectrum, channel_count : int, isAddition : boolean) : Spectrum
+}
+interface NumericCalculations {
+  ~ calculate(spec1 : Spectrum, spec2 : Spectrum) : Spectrum
+}
+class RunAlgos {
+  - {static} add(spec1 : Spectrum, spec2 : Spectrum) : Spectrum
+  - {static} subtract(spec1 : Spectrum, spec2 : Spectrum) : Spectrum
+  - {static} calculateAreaUsingGauss(roi : ROI) : double
+  + {static} calculateAreaUsingCounts(roi : ROI) : double
+}
+}
+package "de.aint.operations.fitters" {
+enum BackgroundFitAlgos {
+  + fit(data : FittingData) : double[]
+  + fit(data : FittingData) : double[]
+  + fit(data : FittingData) : double[]
+}
+interface FitAlgo {
+  ~ fit(data : FittingData) : double[]
+}
+class Fitter {
+  ~ fit(data : FittingData) : double[]
+  ~ fit(roi : ROI) : double[]
+  + fit(data : FittingData) : double[]
+  + fit(data : FittingData) : double[]
+  + fit(data : FittingData) : double[]
+  + fit(data : FittingData) : double[]
+  + fit(data : FittingData) : double[]
+  + fit(roi : ROI) : double[]
+  + {static} fitGaussToROIUsingLM(roi : ROI) : double[]
+  - {static} smoothSpectrumUsingGauss(data : FittingData) : double[]
+  - {static} smoothSpectrumUsingSG(data : FittingData) : double[]
+  - {static} estimateBackgroundUsingALS(data : FittingData) : double[]
+  - {static} estimateBackgroundUsingARPLS(data : FittingData) : double[]
+  - {static} estimateBackgroundUsingFastALS(data : FittingData) : double[]
+}
+class FitterHelper {
+  + {static} buildCurvaturePenalty(n : int, lambda : double) : RealMatrix
+  + {static} createSecondDerivativeMatrix(n : int) : RealMatrix
+  + {static} mirrorIndex(index : int, size : int) : int
+  + {static} exceedsStandardDeviation(counts : double[], threshold : float) : boolean
+  + {static} createSavitzkyGolayKernel(window_size : int, polynomial_degree : int) : double[]
+  + {static} createGaussKernel(sigma : double, kernelSize : int) : double[]
+}
+class FittingData {
+  ~ lambda : double
+  ~ p : double
+  ~ maxIter : int
+  ~ sgWindowSize : int
+  ~ sgIters : int
+  ~ sgEraseOutliers : boolean
+  ~ sgPolynomialDegree : int
+  ~ gaussSigma : double
+  ~ FittingData(spectrum : Spectrum) : public
+  + setLambda(lambda : double) : void
+  + setP(p : double) : void
+  + setMaxIter(maxIter : int) : void
+  + setSgWindowSize(sgWindowSize : int) : void
+  + setSgIters(sgIters : int) : void
+  + setGaussSigma(gaussSigma : double) : void
+  + setSgEraseOutliers(sgEraseOutliers : boolean) : void
+  + setSgPolynomialDegree(sgPolynomialDegree : int) : void
+  + FittingData(spectrum : Spectrum)
+}
+class GenericOpts {
+}
+class LMPeakFitting {
+  - {static} sigmaMinFromE(E : double[]) : double
+  - {static} clamp(value : double, min : double, max : double) : double
+  + {static} calculateWeight(E : double[], y : double[], muSet : double[], alpha : double, kreach : double, sigma : double) : double[]
+  - {static} project(p : double[], sigMin : double, Bset : double, muSet[] : double, Aset : double[]) : double[]
+  - {static} value(E : double[], p : double[]) : double[]
+  - {static} numericModel(E : double[], bSet : double, muSet : double[], Aset : double[]) : MultivariateJacobianFunction
+  + {static} fit(E : double[], y : double[], start : double[], maxIter : int, bCap : double, muSet : double[], Aset : double[], w : double[]) : double[]
+}
+interface PeakFitAlgo {
+  ~ fit(roi : ROI) : double[]
+}
+enum PeakFitAlgos {
+  + fit(roi : ROI) : double[]
+}
+class RunAlgos {
+  + {static} fitGaussToROIUsingLM(roi : ROI) : double[]
+  - {static} smoothSpectrumUsingGauss(data : FittingData) : double[]
+  - {static} smoothSpectrumUsingSG(data : FittingData) : double[]
+  - {static} estimateBackgroundUsingALS(data : FittingData) : double[]w
+  - {static} estimateBackgroundUsingARPLS(data : FittingData) : double[]
+  - {static} estimateBackgroundUsingFastALS(data : FittingData) : double[]
+}
+enum SmoothingFitAlgos {
+  + fit(data : FittingData) : double[]
+  + fit(data : FittingData) : double[]
+}
+}
+package "de.aint.readers" {
+class IsotopeReader {
+  + readIsotopes() : void
+  ~ File(filePath : Object) : new
+  + IsotopeReader(filename : String)
+}
+class McnpReader {
+  + readSpectrum(src : String) : Spectrum
+}
+class Reader {
+  ~ spec : return
+  ~ null : return
+  ~ null : return
+  + readSpectrum(src : String) : Spectrum
+  + {static} readFile(src : String) : Spectrum
+  ~ SpeReader() : new
+  ~ McnpReader() : new
+}
+class SpeReader {
+  + readSpectrum(src : String) : Spectrum
+}
+}
+McnpReader --|> Reader
+SpeReader --|> Reader
+AreaAlgos ..|> AreaCalculations
+CalculatingAlgos ..|> NumericCalculations
+BackgroundFitAlgos ..|> FitAlgo
+PeakFitAlgos ..|> PeakFitAlgo
+SmoothingFitAlgos ..|> FitAlgo
+Api --> Spectrum
+ROIPipeline --> Spectrum
+SpectrumBuilder --> Spectrum
+SpectrumBuilder --> IsotopeReader
+MatchPeakWithIsotop --> Isotop
+MatchPeakWithIsotop --> Peak
+MatchPeakWithIsotop --> IsotopeReader
+PeakDetection --> Spectrum
+Peak --> Isotop
+ROI --> Spectrum
+AreaAlgos --> ROI
+AreaCalculations --> ROI
+CalculatingAlgos --> Spectrum
+Calculator --> ROI
+Calculator --> Spectrum
+CalculatorHelper --> Spectrum
+NumericCalculations --> Spectrum
+RunAlgos --> ROI
+RunAlgos --> Spectrum
+BackgroundFitAlgos --> FittingData
+FitAlgo --> FittingData
+Fitter --> ROI
+Fitter --> FittingData
+FittingData --> Spectrum
+PeakFitAlgo --> ROI
+PeakFitAlgos --> ROI
+RunAlgos --> ROI
+RunAlgos --> FittingData
+SmoothingFitAlgos --> FittingData
+McnpReader --> Spectrum
+Reader --> Spectrum
+SpeReader --> Spectrum
+@enduml
