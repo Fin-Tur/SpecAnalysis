@@ -28,7 +28,14 @@ public class SpectrumBuilder {
     boolean[] touched = new boolean[n];                 //which bins r written to
 
     for (ROI roi : rois) {
-        roi.fitGaussCurve(); //Fit the peaks in the ROI using the GAUSS-LM algorithm
+        if(roi.getFitParams() == null || roi.getFitParams().length == 0){
+            try{
+                roi.fitGaussCurve();
+            } catch (Exception e){
+                logger.error("Error fitting ROI from {} keV to {} keV: {}", roi.getStartEnergy(), roi.getEndEnergy(), e.getMessage());
+                continue;
+            }
+        }
         double[] p = roi.getFitParams(); // p = [B, σ, A1, μ1, T1, G1, A2, μ2, T2, G2, ...]
 
         double B   = p[0];
@@ -154,7 +161,7 @@ public class SpectrumBuilder {
         //Declare Background variants
         variants[2] = createBackgroundSpectrum(spec);
         //Declare Gauss smoothed spectrum, because : SG => overshooting and : overshooting + ALS background => undershooting
-        Spectrum gauss = createSmoothedSpectrumUsingGauss(spec, 3.0);
+        Spectrum gauss = createSmoothedSpectrumUsingGauss(spec, 0);
         variants[3] = createBackgroundSpectrum(gauss);
 
         return variants;

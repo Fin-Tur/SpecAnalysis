@@ -13,16 +13,35 @@ const spectrumOptions = [
     { endpoint: "/smbackground", name: "SM Hintergrund", color: "#f1faee", hasIterations: false }
 ];
 
+window.originalSpectrum = null;
 function fetchSpectrum(endpoint, iterations, windowSize, sigma, backgroundSource, customSource, customIsotopes) {
-    if (endpoint === "/" && window.selectedFile) {
-        // File-Upload for Original
-        const formData = new FormData();
-        formData.append('file', window.selectedFile);
-        return fetch('http://localhost:7000/', {
-            method: 'POST',
-            body: formData
-        }).then(response => response.json())
-          .catch(() => null);
+    if (endpoint === "/") {
+        // Wenn window.selectedFile gesetzt ist und originalSpectrum noch nicht, dann POST (Upload)
+        if (window.selectedFile && !window.originalSpectrum) {
+            const formData = new FormData();
+            formData.append('file', window.selectedFile);
+            return fetch('http://localhost:7000/', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+              .then(data => {
+                  window.originalSpectrum = data;
+                  return data;
+              })
+              .catch(() => null);
+        }
+        // Wenn originalSpectrum schon geladen wurde, liefere es direkt
+        if (window.originalSpectrum) {
+            return Promise.resolve(window.originalSpectrum);
+        }
+        // Fallback: Hole das Original nur einmalig per GET (z.B. beim allerersten Laden ohne Upload)
+        return fetch('http://localhost:7000/')
+            .then(response => response.json())
+            .then(data => {
+                window.originalSpectrum = data;
+                return data;
+            })
+            .catch(() => null);
     }
     let url = 'http://localhost:7000' + endpoint;
     const params = [];

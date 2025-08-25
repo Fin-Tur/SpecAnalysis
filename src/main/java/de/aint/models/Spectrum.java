@@ -43,7 +43,7 @@ public class Spectrum {
         this.ec_quad = ec_quad;
         energy_per_channel = new double[counts.length];
         this.convertChannelsToEnergy();
-        this.backgroundCounts = Fitter.BackgroundFitAlgos.ALS_FAST.fit(new FittingData(this));
+        //this.backgroundCounts = Fitter.BackgroundFitAlgos.ALS_FAST.fit(new FittingData(this));
     }
     //Overloading for mncp specs
     public Spectrum(double[] energy, double[] counts){
@@ -53,7 +53,7 @@ public class Spectrum {
         this.ec_slope = 0;
         this.ec_quad = 0;
         this.energy_per_channel = Arrays.copyOf(energy, energy.length);
-        this.backgroundCounts = Fitter.BackgroundFitAlgos.ALS_FAST.fit(new FittingData(this));
+        //this.backgroundCounts = Fitter.BackgroundFitAlgos.ALS_FAST.fit(new FittingData(this));
     }
 
     //Function to channel data
@@ -98,6 +98,9 @@ public class Spectrum {
 }
 
 
+    public void setBackgroundCounts() {
+        this.backgroundCounts = Fitter.BackgroundFitAlgos.ALS_FAST.fit(new FittingData(this));
+    }
 
     public void setSrcForce(float cntMult){
         this.srcForce = cntMult;

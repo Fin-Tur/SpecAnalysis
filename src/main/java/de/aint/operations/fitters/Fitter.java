@@ -101,6 +101,7 @@ private static class RunAlgos{
     public static double[] fitGaussToROIUsingLM(ROI roi){
 
         //Prepare ROI for Gauss fitting
+        if(roi.getSpectrum().getBackgroundCounts() == null || roi.getSpectrum().getBackgroundCounts().length == 0) roi.getSpectrum().setBackgroundCounts();
         int channelBeg = Helper.findChannelFromEnergy(roi.getStartEnergy(), roi.getSpectrum().getEnergy_per_channel());
         int channelEnd = Helper.findChannelFromEnergy(roi.getEndEnergy(), roi.getSpectrum().getEnergy_per_channel());
         double[] E = Arrays.copyOfRange(roi.getSpectrum().getEnergy_per_channel(), channelBeg, channelEnd+1);

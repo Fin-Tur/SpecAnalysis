@@ -7,6 +7,8 @@ import io.javalin.http.UploadedFile;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.File;
@@ -15,6 +17,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import de.aint.models.*;
+import de.aint.operations.fitters.FittingData;
 import de.aint.builders.SpectrumBuilder;
 import de.aint.detectors.PeakDetection;
 
@@ -35,6 +38,8 @@ public class Api {
         int[] channels = {1677, 391, 3722, 5740};
         double[] energies = {2223.248, 511, 4945.301, 7631.136};
         
+        //Caching
+        HashMap<String, Spectrum> spectrumCache = new HashMap<>();
 
         //get Isotopes
         IsotopeReader isotopeReader = new IsotopeReader("C:\\Users\\f.willems\\Projects\\SpecAnalysis\\src\\main\\resources\\isotop_details.txt");
@@ -62,9 +67,21 @@ public class Api {
             String algorithm = ctx.queryParamAsClass("algorithm", String.class).getOrDefault("SG");
             Spectrum smoothed;
             if ("SG".equalsIgnoreCase(algorithm)) {
-                smoothed = SpectrumBuilder.createSmoothedSpectrumUsingSG(spec, windowSize, 2, true, iterations);
+                String specKey = "smoothed_window"+windowSize+"_poly2_outlierstrue_iters"+iterations;
+                if(spectrumCache.containsKey(specKey)){
+                    smoothed = spectrumCache.get(specKey);
+                }else{
+                    smoothed = SpectrumBuilder.createSmoothedSpectrumUsingSG(spec, windowSize, 2, true, iterations);
+                    spectrumCache.put(specKey, smoothed);
+                }
             } else {
-                smoothed = SpectrumBuilder.createSmoothedSpectrumUsingGauss(spec, sigma);
+                String specKey = "Gauss_sigma" + sigma;
+                if(spectrumCache.containsKey(specKey)){
+                    smoothed = spectrumCache.get(specKey);
+                }else{
+                    smoothed = SpectrumBuilder.createSmoothedSpectrumUsingGauss(spec, sigma);
+                    spectrumCache.put(specKey, smoothed);
+                }
             }
             
             ctx.json(smoothed);
@@ -82,7 +99,6 @@ public class Api {
         });
 
         app.get("/isotopes", ctx -> {
-            logger.info("{} isotopes loaded!", isotopes.size());
             ctx.json(isotopes);
         });
 
@@ -125,6 +141,13 @@ public class Api {
                 spec = Reader.readFile(tempFile.getAbsolutePath());
                 spec.changeEnergyCal(channels, energies);
                 variants = SpectrumBuilder.createSpectrumVariants(spec);
+                spectrumCache.put("original", spec);
+                String smoothedStandartKey = "smoothed_window"+FittingData.GenericOpts.sgWindowSize+"_poly2_outliers"+FittingData.GenericOpts.sgEraseOutliers+"_iters"+FittingData.GenericOpts.sgIters;
+                spectrumCache.put(smoothedStandartKey, variants[1]);
+                String backgroundStandartKey = "background_lambda"+FittingData.GenericOpts.lambda+"_p"+FittingData.GenericOpts.p+"_maxIter"+FittingData.GenericOpts.maxIter;
+                spectrumCache.put(backgroundStandartKey, variants[2]);
+                String backgroundSmoothedKey = "backgroundSmoothed_lambda"+FittingData.GenericOpts.lambda+"_p"+FittingData.GenericOpts.p+"_maxIter"+FittingData.GenericOpts.maxIter;
+                spectrumCache.put(backgroundSmoothedKey, variants[3]);
                 try {
                     java.nio.file.Files.delete(tempFile.toPath());
                 } catch (java.io.IOException e) {

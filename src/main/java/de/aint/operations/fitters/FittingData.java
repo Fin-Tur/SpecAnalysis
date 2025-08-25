@@ -5,17 +5,17 @@ import de.aint.models.*;
 public class FittingData{
 
     //STANDART VALUES
-    private static class GenericOpts {
+    public static class GenericOpts {
         //BACKGROUND-VALUES
-        static final double lambda = 2e4;
-        static final double p = 8e-4;
-        static final int maxIter = 10;
+        public static final double lambda = 2e4;
+        public static final double p = 8e-4;
+        public static final int maxIter = 10;
         //SMOOTHING-VALUES
-        static final int sgWindowSize = 17;
-        static final int sgIters = 1;
-        static final boolean sgEraseOutliers = false;
-        static final int sgPolynomialDegree = 2;
-        static final double gaussSigma = 3.0;
+        public static final int sgWindowSize = 17;
+        public static final int sgIters = 1;
+        public static final boolean sgEraseOutliers = false;
+        public static final int sgPolynomialDegree = 2;
+        public static final double gaussSigma = 3.0;
         //PEAKFITTING-VALUES
         
 

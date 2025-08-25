@@ -12,9 +12,10 @@ import org.apache.commons.math3.special.Erf;
 import org.apache.commons.math3.util.Pair;
 
 public class LMPeakFitting {
-       //Changed allowed
+    //Allow alghorithm to change variable in x radius
     static final double muRangeRadius = 0;
-    static final double ARangeRadius = 100;
+    static final double ARangeRadius = 0;
+    static final double Bradius = 50;
 
     private static double sigmaMinFromE(double[] E){
         if (E.length < 2) return 1e-8; //Avoid division by zero
@@ -61,7 +62,7 @@ public class LMPeakFitting {
 
     private static double[] project(double[] p, double sigMin, double Bset, double muSet[], double[] Aset){
         double[] q = p.clone();
-        q[0] = Bset;
+        q[0] = clamp(q[0], Bset - Bradius, Bset + Bradius);
         q[1] = Math.max(p[1], sigMin);
 
         int nPeaks = (q.length - 2) / 4;
