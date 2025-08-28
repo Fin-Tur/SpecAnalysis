@@ -3,6 +3,7 @@ package de.aint;
 
 import de.aint.models.*;
 import de.aint.readers.Reader;
+import de.aint.services.SpectrumService;
 
 
 //==================================================DEBUGGING-ONLY=================================================================================
@@ -16,6 +17,7 @@ public class Main {
         int[] channels = {1677, 391, 3722, 5740};
         double[] energies = {2223.248, 511, 4945.301, 7631.136};
         spec.changeEnergyCal(channels, energies);
+
 
     }
 

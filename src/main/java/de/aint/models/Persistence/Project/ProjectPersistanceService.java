@@ -31,7 +31,7 @@ public class ProjectPersistanceService {
         if (entity == null) {
             throw new IllegalArgumentException("Project not found");
         }
-        entity.getSpecEnts().size(); //Force loading of lazy spectra
+        long size = entity.getSpecEnts().size(); //Force loading of lazy spectra
         return projectMapper.toDomain(entity);
     }
 
@@ -48,6 +48,12 @@ public class ProjectPersistanceService {
         SpectrumEntity sEntity = spectrumRepository.findById(spectrumID).orElseThrow();
         sEntity.setProject(pEntity);
         pEntity.getSpecEnts().add(sEntity);
+    }
+
+    @Transactional
+    public Long getIDFromName(String name){
+        ProjectEntity entity = projectRepository.findByName(name);
+        return entity != null ? entity.getId() : null;
     }
     
 }

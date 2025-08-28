@@ -3,7 +3,7 @@ package de.aint.controller;
 import de.aint.models.Isotop;
 import de.aint.models.Spectrum;
 import de.aint.models.Persistence.Roi.RoiDTO;
-import de.aint.controller.SpectrumService;
+import de.aint.services.SpectrumService;
 import jakarta.validation.constraints.Min;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

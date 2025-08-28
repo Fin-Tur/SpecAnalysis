@@ -1,4 +1,4 @@
-package de.aint.controller;
+package de.aint.services;
 
 import de.aint.builders.SpectrumBuilder;
 import de.aint.detectors.PeakDetection;
@@ -29,7 +29,7 @@ public class SpectrumService {
     private static final Logger log = LoggerFactory.getLogger(SpectrumService.class);
 
     private final ResourceLoader resourceLoader;
-    private volatile Spectrum spec = null;
+    private final java.util.concurrent.atomic.AtomicReference<Spectrum> spec = new java.util.concurrent.atomic.AtomicReference<>(null);
     private final Spectrum[] variants = new Spectrum[]{null, null, null, null};
     private final Map<String, Spectrum> spectrumCache = new ConcurrentHashMap<>();
 
@@ -57,7 +57,7 @@ public class SpectrumService {
     }
 
     public Spectrum getCurrentSpectrum() {
-        return spec;
+        return spec.get();
     }
 
     public List<Isotop> getIsotopes() {
@@ -67,7 +67,7 @@ public class SpectrumService {
     public Spectrum uploadAndParse(File file) throws IOException {
         Spectrum s = Reader.readFile(file.getAbsolutePath());
         s.changeEnergyCal(channels, energies);
-        this.spec = s;
+        this.spec.set(s);
 
         Spectrum[] v = SpectrumBuilder.createSpectrumVariants(s);
         System.arraycopy(v, 0, variants, 0, variants.length);
@@ -81,7 +81,7 @@ public class SpectrumService {
     }
 
     private void ensureSpectrumLoaded() {
-        if (spec == null) {
+        if (spec.get() == null) {
             throw new IllegalStateException("Kein Spektrum geladen. Bitte zuerst per POST / uploaden.");
         }
     }
@@ -91,11 +91,11 @@ public class SpectrumService {
         if ("SG".equalsIgnoreCase(algorithm)) {
             String key = "smoothed_window" + windowSize + "_poly2_outliersTrue_iters" + iterations;
             return spectrumCache.computeIfAbsent(key,
-                    k -> SpectrumBuilder.createSmoothedSpectrumUsingSG(spec, windowSize, 2, true, iterations));
+                    k -> SpectrumBuilder.createSmoothedSpectrumUsingSG(spec.get(), windowSize, 2, true, iterations));
         } else {
             String key = "Gauss_sigma" + sigma;
             return spectrumCache.computeIfAbsent(key,
-                    k -> SpectrumBuilder.createSmoothedSpectrumUsingGauss(spec, sigma));
+                    k -> SpectrumBuilder.createSmoothedSpectrumUsingGauss(spec.get(), sigma));
         }
     }
 

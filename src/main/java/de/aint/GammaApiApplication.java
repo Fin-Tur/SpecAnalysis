@@ -1,4 +1,4 @@
-package de.aint.controller;
+package de.aint;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

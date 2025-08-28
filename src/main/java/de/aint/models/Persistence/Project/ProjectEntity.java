@@ -1,5 +1,6 @@
 package de.aint.models.Persistence.Project;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import de.aint.models.Persistence.Spec.SpectrumEntity;
@@ -29,6 +30,7 @@ public class ProjectEntity {
 
     public ProjectEntity(String name) {
         this.name = name;
+        this.specEnts = new ArrayList<>();
     }
 
     //Getters
