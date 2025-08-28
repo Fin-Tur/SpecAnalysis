@@ -2,9 +2,10 @@ package de.aint.operations.fitters;
 
 
 import java.util.Arrays;
+import java.util.ArrayList;
 
 import org.apache.commons.math3.fitting.GaussianCurveFitter;
-import org.apache.commons.math3.fitting.WeightedObservedPoints;
+import org.apache.commons.math3.fitting.WeightedObservedPoint;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.CholeskyDecomposition;
 import org.apache.commons.math3.linear.DecompositionSolver;
@@ -84,7 +85,7 @@ public enum PeakFitAlgos implements PeakFitAlgo {
     GAUSS{
         @Override
         public double[] fit(ROI roi) {
-            return RunAlgos.fitGaussCurveToRoi(roi);
+            return null;//RunAlgos.fitGaussCurveToRoi(roi);
         }
     }
 
@@ -94,25 +95,32 @@ private static class RunAlgos{
 
     //================================================GAUSS-PEAK-FITTER===================================================
     // !!! returns Gauss Curve params !!!
-    private static double[] fitGaussCurveToRoi(ROI roi){
+    /*private static double[] fitGaussCurveToRoi(ROI roi){
         double[] counts = roi.getSpectrum().getCounts();
-        int start_channel = Helper.findChannelFromEnergy(roi.getStartEnergy(), roi.getSpectrum().getEnergy_per_channel());
-        int end_channel = Helper.findChannelFromEnergy(roi.getEndEnergy(), roi.getSpectrum().getEnergy_per_channel());
+        int startChannel = Helper.findChannelFromEnergy(roi.getStartEnergy(), roi.getSpectrum().getEnergy_per_channel());
+        int endChannel = Helper.findChannelFromEnergy(roi.getEndEnergy(), roi.getSpectrum().getEnergy_per_channel());
+        int centerChannel = Helper.findChannelFromEnergy(roi.getPeakCenter(), roi.getSpectrum().getEnergy_per_channel());
+
+        int len = endChannel - startChannel;
+        if(len == 0) len = 1;
+        System.out.println(len);
 
         //Create a Gaussian fitter
-        WeightedObservedPoints obs = new WeightedObservedPoints();
-        for (int i = start_channel; i <= end_channel; i++) {
+        ArrayList<WeightedObservedPoint> obs = new ArrayList<>();
+        for (int i = startChannel; i <= endChannel; i++) {
             if (i >= 0 && i < counts.length) {
-                obs.add(i, counts[i]);
+                double weight = 1 - (Math.abs(centerChannel - i)/(len/2.0));
+                System.out.println("Weight: "+weight);
+                WeightedObservedPoint point = new WeightedObservedPoint(weight, i, counts[i]);
+                obs.add(point);
             }
         }
         GaussianCurveFitter fitter = GaussianCurveFitter.create().withMaxIterations(100000);
         // Fit the Gaussian curve to the observed points
-        System.out.println("Fitting Gaussian curve " + roi.getPeakCenter());
         double[] gaussParams = {0, roi.getPeakCenter(), 1};
 
         try{
-            gaussParams = fitter.fit(obs.toList());
+            gaussParams = fitter.fit(obs);
         }catch(Exception e){
             System.err.println("Error fitting Gaussian curve: " + e.getMessage());
         }
@@ -120,7 +128,7 @@ private static class RunAlgos{
         
 
         return gaussParams;
-    }
+    }*/
 
     //==================================================GAUSS================================================================
 
@@ -178,17 +186,17 @@ private static class RunAlgos{
 
             double[] weight = FitterHelper.createSavitzkyGolayKernel(window_size, polynomial_degree);
             //Smooth spectrum
-            for(int i = half_window; i<spec.getChannel_count()-half_window; i++){
+            for(int i = 0; i<spec.getChannel_count(); i++){
                 double count = 0;
                 //Check for false peaks
-                if(eraseOutliers && FitterHelper.exceedsStandardDeviation(Arrays.copyOfRange(counts, i-half_window, i+half_window+1), 5f)){
+                if(eraseOutliers && FitterHelper.exceedsStandardDeviation(Arrays.copyOfRange(counts, Math.max(i-half_window, 0), Math.min(i+half_window+1, counts.length-1)), 5f)){
                     smoothed_counts[i] = counts[i];
                     continue;
                 }
                 double[] window = new double[window_size];
-                window = Arrays.copyOfRange(counts, i-half_window, i+half_window+1);
+                window = Arrays.copyOfRange(counts, Math.max(i-half_window, 0), Math.min(i+half_window+1, counts.length-1));
                 for(int j = -half_window; j<=half_window; j++){
-                    count += counts[i+j] * weight[j+half_window];
+                    count += counts[FitterHelper.mirrorIndex(i+j, counts.length)] * weight[FitterHelper.mirrorIndex(j+half_window, weight.length)];
                 }
                 smoothed_counts[i] = count;
                 //half_window++;

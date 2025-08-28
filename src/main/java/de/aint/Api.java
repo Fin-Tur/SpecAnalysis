@@ -6,6 +6,7 @@ import io.javalin.Javalin;
 import io.javalin.http.UploadedFile;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -32,7 +33,8 @@ public class Api {
         
 
         //get Isotopes
-        IsotopeReader isotopeReader = new IsotopeReader();
+        IsotopeReader isotopeReader = new IsotopeReader("C:\\Users\\f.willems\\Projects\\SpecAnalysis\\src\\main\\resources\\isotop_details.txt");
+        isotopeReader.readIsotopes();
         ArrayList<Isotop> isotopes = isotopeReader.isotopes;
 
         
@@ -94,15 +96,16 @@ public class Api {
             if(source.equals("isotopes")){
                 customSpectrum = SpectrumBuilder.createCustomSpectrum(variants[3], selectedIsotopes, isotopeReader);
             }else if(source.equals("peaks")){
-                ROI[] peaks = PeakDetection.detectPeaks(variants[0]);
-                customSpectrum = SpectrumBuilder.createPeakFitSpectrum(variants[3], peaks);
+                ROI[] rois = PeakDetection.splitSpectrumIntoRois(variants[0]);
+                ROI[] testROIS = Arrays.copyOfRange(rois, 0, rois.length-2);
+                customSpectrum = SpectrumBuilder.createPeakFitSpectrum(variants[3], testROIS);
             }
            
             ctx.json(customSpectrum);
         });
 
         app.get("/peaks", ctx -> {
-            ROI[] peaks = PeakDetection.detectPeaks(variants[0]);
+            Peak[] peaks = PeakDetection.detectPeaks(variants[0]).toArray(new Peak[0]);
             ctx.json(peaks);
         });
 
@@ -119,7 +122,7 @@ public class Api {
                 spec.changeEnergyCal(channels, energies);
                 variants = SpectrumBuilder.createSpectrumVariants(spec);
                 if(!tempFile.delete()) System.out.println("Could not delete temporary file: " + tempFile.getAbsolutePath());
-                ctx.json(spec);
+                ctx.json(variants[0]);
             } else {
                 ctx.status(400).result("No file uploaded");
             }

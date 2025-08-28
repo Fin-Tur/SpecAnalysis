@@ -1,43 +1,80 @@
 package de.aint.builders;
 
+import de.aint.detectors.SumGaussNumeric;
 import de.aint.models.*;
 import de.aint.operations.*;
+import de.aint.operations.calculators.Calculator.CalculatingAlgos;
 import de.aint.operations.fitters.*;
 import de.aint.readers.IsotopeReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.apache.commons.math3.special.Erf;
+
 public abstract class SpectrumBuilder {
 
     //=====================PEAK_FITTING======================================
-    public static Spectrum createPeakFitSpectrum(Spectrum spec, ROI[] peaks) {
+    public static Spectrum createPeakFitSpectrum(Spectrum spec, ROI[] rois) {
+    double[] energies = spec.getEnergy_per_channel();   // E[i] in keV
+    int n = energies.length;
 
-        double[] counts = Arrays.copyOf(spec.getCounts(), spec.getCounts().length);
-        boolean[] isPeak = new boolean[counts.length];
+    // separate Fit-Kurve, damit das Original unangetastet bleibt
+    double[] fitCurve = new double[n];                  // nur die Summe der Gauss-Beiträge
+    boolean[] touched = new boolean[n];                 // welche Bins wurden von irgendeiner ROI beschrieben?
 
-        for (ROI peak : peaks) {
-            double[] fit = Fitter.PeakFitAlgos.GAUSS.fit(peak);
-            System.out.println(fit[0]);
-            //Gather start and end energy and add 5 to smoothe out harsh curves
-            int startPoint = Helper.findChannelFromEnergy(peak.getStartEnergy(), spec.getEnergy_per_channel())-5;
-            int endPoint = Helper.findChannelFromEnergy(peak.getEndEnergy(), spec.getEnergy_per_channel())+5;
+    for (ROI roi : rois) {
+        
+        double[] p = SumGaussNumeric.fitGaussToROI(roi);   // p = [B, σ, A1, μ1, T1, G1, A2, μ2, T2, G2, ...]
 
-            if(startPoint<0) startPoint = 0;
-            if(endPoint>=counts.length) endPoint = counts.length-1; 
-            // Apply the Gaussian fit to the counts
-            for (int i = startPoint; i < endPoint; i++) {
-                if(isPeak[i]){
-                    double contribution = fit[0] * Math.exp(-0.5 * Math.pow((i - fit[1]) / fit[2], 2));
-                    //counts[i] = (counts[i] + contribution)/2;
-                    counts[i] = Math.max(counts[i], contribution); // Keep the maximum value
-                }else{
-                    counts[i] += fit[0] * Math.exp(-0.5 * Math.pow((i - fit[1]) / fit[2], 2));
-                    isPeak[i] = true;
-                }
+        double B   = p[0];
+        double sigma = p[1];
+        int nPeaks = (p.length - 2) / 4;
+
+        // Kanalgrenzen der ROI (inklusive Ende!)
+        int i0 = Helper.findChannelFromEnergy(roi.getStartEnergy(), energies);
+        int i1 = Helper.findChannelFromEnergy(roi.getEndEnergy(),   energies);
+        if (i0 > i1) { int t=i0; i0=i1; i1=t; }
+        i0 = Math.max(0, i0);
+        i1 = Math.min(n-1, i1);
+
+        double inv2s2 = 1.0 / (2.0 * sigma * sigma);
+
+        for (int i = i0; i <= i1; i++) {
+            double Ei = energies[i];    // *** Energie in keV, nicht der Kanalindex! ***
+            double sumPeaks = 0.0;
+            for (int k = 0; k < nPeaks; k++) {
+                double A  = p[2 + 4*k];
+                double mu = p[3 + 4*k];
+                double T  = p[4 + 4*k];
+                double G  = p[5 + 4*k];
+                double z  = Ei - mu;
+                double delta = Math.sqrt(2) * sigma;
+
+                double base = Math.exp(- z*z * inv2s2);
+                double tail = 0.5 * T * Math.exp(z / (G * delta)) * Erf.erfc((z / delta) + 1.0 / (2.0 * G));
+
+                sumPeaks += A * (base + tail);
             }
+            // Nur die Peak-Summe ablegen; Baseline separat behandeln (s.u.)
+            fitCurve[i] += sumPeaks+B;    // additiv erlaubt Überlappung mehrerer ROIs
+            touched[i] = true;
         }
-        return new Spectrum(spec.getEnergy_per_channel(), counts);
+
+        //for (int i = i0; i <= i1; i++) fitCurve[i] += B;
     }
+
+    // Variante A (empfohlen fürs Plotten):
+    //   Rückgabe eines Spektrums, das NUR die fit-Kurve enthält (zum Overlay).
+    //   Im Plot: Original (spec.counts) + Overlay (fitCurve) zeichnen.
+    //Spectrum fittedCurves = new Spectrum(energies, fitCurve);
+    //return CalculatingAlgos.ADDITION.calculate(spec, fittedCurves);
+
+    // Variante B (synthetisches "gefitttes" Spektrum):
+       double[] composed = spec.getCounts().clone();
+       for (int i = 0; i < n; i++) if (touched[i]) composed[i] = fitCurve[i]; // oder composed[i] = Math.max(composed[i], fitCurve[i]);
+       return new Spectrum(energies, composed);
+}
+
 
     //=============CUSTOM==================
     public static Spectrum createCustomSpectrum(Spectrum spectrum, ArrayList<String> selectedIsotopesAsIDString, IsotopeReader isotopeReader) {
@@ -76,7 +113,7 @@ public abstract class SpectrumBuilder {
         if(polynomial_degree != 0){
             data.setSgPolynomialDegree(polynomial_degree);
         }
-        if(!eraseOutliers){
+        if(eraseOutliers){
             data.setSgEraseOutliers(eraseOutliers);
         }
         if(iterations != 0){
@@ -111,10 +148,13 @@ public abstract class SpectrumBuilder {
         Spectrum[] variants = new Spectrum[4];
         variants[0] = spec;
         //0 for standart vals
-        variants[1] = createSmoothedSpectrumUsingSG(spec, 0, 0, false, 0);
+        variants[1] = createSmoothedSpectrumUsingSG(spec, 0, 0, true, 0);
+        
         //Declare Background variants
         variants[2] = createBackgroundSpectrum(spec);
-        variants[3] = createBackgroundSpectrum(variants[1]);
+        //Declare Gauss smoothed spectrum, because : SG => overshooting and : overshooting + ALS background => undershooting
+        Spectrum gauss = createSmoothedSpectrumUsingGauss(spec, 3.0);
+        variants[3] = createBackgroundSpectrum(gauss);
 
         return variants;
     }

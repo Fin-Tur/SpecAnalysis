@@ -2,24 +2,29 @@ package de.aint;
 
 
 import de.aint.detectors.PeakDetection;
+import de.aint.detectors.SumGaussNumeric;
 import de.aint.models.*;
 import de.aint.readers.Reader;
 import de.aint.builders.*;
 
+//==================================================DEBUGGING-ONLY=================================================================================
+
+
 public class Main {
     public static void main(String[] args){
 
-        Spectrum spec1 = Reader.readFile("C:/Users/f.willems/IdeaProjects/SpecAnalysis/src/main/resources/Leere_Kammer_85_40_50_1000_930_p_8k.Spe");
-        //spec1.changeEnergyCal(1677, 2223.248, 391, 511);
-        
-        Spectrum smooth = SpectrumBuilder.createSmoothedSpectrumUsingSG(spec1, 0, 0, false, 0);
-        Spectrum bckgroundsmt = SpectrumBuilder.createBackgroundSpectrum(spec1);
+        //Prepare Spec
+        Spectrum spec = Reader.readFile("C:/Users/f.willems/IdeaProjects/SpecAnalysis/src/main/resources/Leere_Kammer_85_40_50_1000_930_p_8k.Spe");
+        int[] channels = {1677, 391, 3722, 5740};
+        double[] energies = {2223.248, 511, 4945.301, 7631.136};
+        spec.changeEnergyCal(channels, energies);
 
-    
+        ROI[] rois = PeakDetection.splitSpectrumIntoRois(spec);
 
-        ROI[] detectedPeaks = PeakDetection.detectPeaks(spec1);
-        for(ROI peak : detectedPeaks) {
-            System.out.println("Detected Isotope: " + peak.getEstimatedIsotope() + " @ energy [keV] "+ peak.getStartEnergy()+1);
+        ROI roi = rois[5];
+        double[] fitParams = SumGaussNumeric.fitGaussToROI(roi);
+        for(var param : fitParams) {
+            System.out.println("Fitted Parameter: " + param);
         }
 
         return;
