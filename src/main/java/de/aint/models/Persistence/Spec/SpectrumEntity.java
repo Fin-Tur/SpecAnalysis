@@ -1,5 +1,6 @@
 package de.aint.models.Persistence.Spec;
 
+import de.aint.models.Persistence.Project.ProjectEntity;
 import jakarta.persistence.*;
 
 @Entity
@@ -22,6 +23,10 @@ public class SpectrumEntity {
     @Lob
     @Column(columnDefinition = "TEXT")
     private String countsJson;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional=true)
+    @JoinColumn(name = "project_id")
+    private ProjectEntity project;
 
     protected SpectrumEntity(){} //JPA requires a default constructor
 
@@ -61,5 +66,10 @@ public class SpectrumEntity {
 
     public String getCountsJson() {
         return countsJson;
+    }
+
+    //Setters
+    public void setProject(ProjectEntity project) {
+        this.project = project;
     }
 }
