@@ -1,5 +1,5 @@
 package de.aint;
-
+/* 
 import de.aint.readers.IsotopeReader;
 import de.aint.readers.Reader;
 import io.javalin.Javalin;
@@ -50,7 +50,7 @@ public class Api {
         isotopeReader.readIsotopes();
         ArrayList<Isotop> isotopes = isotopeReader.isotopes;
 
-        
+        //====================================================================================================================
         //Start Javalin Server
         logger.info("Started Javalin Server on localhost:7000");
 
@@ -168,3 +168,4 @@ public class Api {
 
     }
 }
+*/

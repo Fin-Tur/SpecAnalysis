@@ -150,7 +150,7 @@ private static class RunAlgos{
         double[] counts = spec.getCounts();
         double[] newCounts = new double[counts.length];
         double[] kernel = FitterHelper.createGaussKernel(sigma, windowSize);
-
+        
         for(int i = 0; i < counts.length; i++){
             double smoothedValue = 0.0;
             for(int j = i-radius; j <= i+radius; j++){

@@ -1,4 +1,7 @@
-package de.aint.models;
+package de.aint.models.Persistence.Roi;
+
+import de.aint.models.Peak;
+import de.aint.models.ROI;
 
 public class RoiDTO {
     public double startEnergy;

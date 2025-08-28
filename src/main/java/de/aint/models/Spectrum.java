@@ -26,7 +26,7 @@ public class Spectrum {
     //Energy - channels : initialized w/ channelsToEnergy
     private final double[] energy_per_channel;
     //srcForce in n/s || mcnp = cpunt*this
-    private float srcForce = 1;
+    private double srcForce = 1;
 
     private double[] backgroundCounts;
 
@@ -53,6 +53,19 @@ public class Spectrum {
         this.ec_slope = 0;
         this.ec_quad = 0;
         this.energy_per_channel = Arrays.copyOf(energy, energy.length);
+        //this.backgroundCounts = Fitter.BackgroundFitAlgos.ALS_FAST.fit(new FittingData(this));
+    }
+
+    //Overloading for Domain/Entity Mapping
+    public Spectrum(double[] counts, double ec_offset, double ec_slope, double ec_quad, double srcForce){
+        this.channel_count = counts.length;
+        this.counts = Arrays.copyOf(counts, counts.length);
+        this.ec_offset = ec_offset;
+        this.ec_slope = ec_slope;
+        this.ec_quad = ec_quad;
+        this.srcForce = srcForce;
+        energy_per_channel = new double[counts.length];
+        this.convertChannelsToEnergy();
         //this.backgroundCounts = Fitter.BackgroundFitAlgos.ALS_FAST.fit(new FittingData(this));
     }
 
@@ -106,13 +119,26 @@ public class Spectrum {
         this.srcForce = cntMult;
     }
 
-    public float getSrcForce(){
+    public double getSrcForce(){
         return this.srcForce;
     }
 
     public double[] getCounts(){
         return this.counts;
     }
+
+    public double getEc_offset() {
+        return ec_offset;
+    }
+
+    public double getEc_slope() {
+        return ec_slope;
+    }
+
+    public double getEc_quad() {
+        return ec_quad;
+    }
+
 
     public double[] getEnergy_per_channel() {
         return this.energy_per_channel;
