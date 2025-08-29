@@ -36,10 +36,10 @@ public class ProjectPersistanceService {
     }
 
     @Transactional
-    public Long save(Project pr){
+    public ProjectEntity save(Project pr){
         ProjectEntity entity = projectMapper.toEntity(pr);
         projectRepository.save(entity);
-        return entity.getId();
+        return entity;
     }
 
     @Transactional
@@ -55,5 +55,19 @@ public class ProjectPersistanceService {
         ProjectEntity entity = projectRepository.findByName(name);
         return entity != null ? entity.getId() : null;
     }
-    
+
+    @Transactional
+    public List<Project> listProjects() {
+        return projectRepository.findAll().stream()
+                .map(projectMapper::toDomain)
+                .toList();
+    }
+
+    @Transactional
+    public List<Spectrum> getSpectraForProject(Long projectID) {
+        ProjectEntity entity = projectRepository.findById(projectID).orElseThrow();
+        return entity.getSpecEnts().stream()
+                .map(spectrumMapper::toDomain)
+                .toList();
+    }
 }

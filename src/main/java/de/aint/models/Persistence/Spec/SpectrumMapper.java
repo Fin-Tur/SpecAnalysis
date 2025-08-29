@@ -23,7 +23,7 @@ public class SpectrumMapper {
     public Spectrum toDomain(SpectrumEntity entity){
         try{
             double[] counts = mapper.readValue(entity.getCountsJson(), double[].class);
-            Spectrum spec = new Spectrum(counts, entity.getEc_offset(), entity.getEc_slope(), entity.getEc_quad(), entity.getSrcForce());
+            Spectrum spec = new Spectrum(entity.getName(), counts, entity.getEc_offset(), entity.getEc_slope(), entity.getEc_quad(), entity.getSrcForce());
             return spec;
         } catch (Exception e) {
             throw new RuntimeException("Error mapping SpectrumEntity to Spectrum", e);

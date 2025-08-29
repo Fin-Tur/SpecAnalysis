@@ -6,6 +6,8 @@ import de.aint.models.Isotop;
 import de.aint.models.ROI;
 import de.aint.models.Spectrum;
 import de.aint.models.Persistence.Roi.RoiDTO;
+import de.aint.models.Persistence.Spec.SpectrumEntity;
+import de.aint.models.Persistence.Spec.SpectrumPersistanceService;
 import de.aint.operations.fitters.FittingData;
 import de.aint.readers.IsotopeReader;
 import de.aint.readers.Reader;
@@ -16,6 +18,8 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.transaction.TransactionScoped;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -29,6 +33,7 @@ public class SpectrumService {
     private static final Logger log = LoggerFactory.getLogger(SpectrumService.class);
 
     private final ResourceLoader resourceLoader;
+    private final SpectrumPersistanceService spectrumPersistanceService;
     private final java.util.concurrent.atomic.AtomicReference<Spectrum> spec = new java.util.concurrent.atomic.AtomicReference<>(null);
     private final Spectrum[] variants = new Spectrum[]{null, null, null, null};
     private final Map<String, Spectrum> spectrumCache = new ConcurrentHashMap<>();
@@ -39,8 +44,9 @@ public class SpectrumService {
     private IsotopeReader isotopeReader;
     private List<Isotop> isotopes = Collections.emptyList();
 
-    public SpectrumService(ResourceLoader resourceLoader) {
+    public SpectrumService(ResourceLoader resourceLoader, SpectrumPersistanceService spectrumPersistanceService) {
         this.resourceLoader = resourceLoader;
+        this.spectrumPersistanceService = spectrumPersistanceService;
     }
 
     @PostConstruct
@@ -54,6 +60,11 @@ public class SpectrumService {
         isotopeReader.readIsotopes();
         this.isotopes = new ArrayList<>(isotopeReader.isotopes);
         log.info("Loaded {} isotopes", isotopes.size());
+    }
+
+    @Transaction
+    public Long addSpectrum(String name, Spectrum spectrum){
+        return spectrumPersistanceService.save(name, spectrum);
     }
 
     public Spectrum getCurrentSpectrum() {
