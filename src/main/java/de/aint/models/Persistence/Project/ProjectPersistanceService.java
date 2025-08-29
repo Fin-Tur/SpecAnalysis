@@ -51,6 +51,18 @@ public class ProjectPersistanceService {
     }
 
     @Transactional
+    public void delete(String name) {
+        ProjectEntity entity = projectRepository.findByName(name);
+        if (entity == null) {
+            throw new IllegalArgumentException("Project not found");
+        }
+        for(var specEnt : entity.getSpecEnts()) {
+            specEnt.setProject(null);;
+        }
+        projectRepository.delete(entity);
+    }
+
+    @Transactional
     public Long getIDFromName(String name){
         ProjectEntity entity = projectRepository.findByName(name);
         return entity != null ? entity.getId() : null;

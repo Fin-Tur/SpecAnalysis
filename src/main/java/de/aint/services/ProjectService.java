@@ -41,6 +41,11 @@ public class ProjectService {
     }
 
     @Transactional
+    public void deleteProject(Project project) {
+        projectPersistanceService.delete(project.getName());
+    }
+
+    @Transactional
     public void addSpectrumToProject(Long projectID, Long spectrumID) {
         projectPersistanceService.addSpectrum(projectID, spectrumID);
     }

@@ -286,7 +286,7 @@ function plotSelectedSpectra() {
     const layout = {
       margin: { l: 60, r: 30, t: 30, b: 60 },
       xaxis: { title: "Energy (keV)" },
-      yaxis: { title: "Counts" },
+      yaxis: { title: "Counts", type: "log" },
       legend: { orientation: "h" }
     };
 

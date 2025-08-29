@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.aint.models.Project;
 import de.aint.models.Spectrum;
 import de.aint.models.Persistence.Project.ProjectEntity;
 import de.aint.services.ProjectService;
@@ -48,6 +49,16 @@ public class ProjectController {
     public ResponseEntity<List<String>> listProjects() {
         List<String> projects = projectService.listProjects();
         return ResponseEntity.ok(projects);
+    }
+
+    @GetMapping("/{name}/del")
+    public ResponseEntity<Void> deleteProject(@PathVariable String name) {
+        if (name == null) {
+            return ResponseEntity.notFound().build();
+        }
+        Project pr = projectService.loadProject(name);
+        projectService.deleteProject(pr);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{name}")

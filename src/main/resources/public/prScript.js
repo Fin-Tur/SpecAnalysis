@@ -33,6 +33,27 @@ function addProject(name) {
     });
 }
 
+function deleteProject(name){
+    if(!name){
+        return;
+    }
+    fetch("/projects/" + name + "/del", {
+        method: "GET"
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error("Failed to delete project");
+        }
+        return response.text();
+    })
+    .then(() => {
+        fetchProjects();
+    })
+    .catch(err => {
+        alert('Project couldnt be deleted: ' + err.message);
+    });
+}
+
 
 function renderProjectList() {
     const projectList = document.getElementById("project-list");
@@ -78,8 +99,17 @@ function renderProjectList() {
         selectBtn.onclick = function() {
             window.location.href = `index.html?project=${encodeURIComponent(project)}`;
         };
+        const delBtn = document.createElement('button');
+        delBtn.textContent = 'Delete';
+        delBtn.className = 'delete-project-btn';
+        delBtn.onclick = function() {
+            if (confirm("Are you sure you want to delete this project?")) {
+                deleteProject(project);
+            }
+        };
         li.appendChild(nameSpan);
         li.appendChild(selectBtn);
+        li.appendChild(delBtn);
         projectList.appendChild(li);
     });
 }
