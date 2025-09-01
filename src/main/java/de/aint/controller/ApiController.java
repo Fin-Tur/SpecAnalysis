@@ -19,7 +19,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/")
-@CrossOrigin(origins = "*") // entspricht Javalin: anyHost()
+@CrossOrigin(origins = "*")
 public class ApiController {
     private static final Logger log = LoggerFactory.getLogger(ApiController.class);
 
@@ -29,42 +29,46 @@ public class ApiController {
         this.service = service;
     }
 
-    //Get "/"
+
     @GetMapping
-    public ResponseEntity<?> getSpectrum() {
-        Spectrum s = service.getCurrentSpectrum();
+    public ResponseEntity<Spectrum> getSpectrum(@RequestHeader("X-Spectrum-Id") Long spectrumId) {
+        Spectrum s = service.getSpectrumByID(spectrumId);
         return (s == null) ? ResponseEntity.noContent().build() : ResponseEntity.ok(s);
     }
 
-    //Get "/smoothed"
+
+    //Get "/smoothed" (jetzt mit Spektrum-ID)
     @GetMapping("smoothed")
     public ResponseEntity<Spectrum> getSmoothed(
+            @RequestHeader("X-Spectrum-Id") Long spectrumId,
             @RequestParam(defaultValue = "SG") String algorithm,
             @RequestParam(name = "window_size", defaultValue = "0") @Min(0) int windowSize,
             @RequestParam(defaultValue = "0") @Min(0) int iterations,
             @RequestParam(defaultValue = "0") @Min(0) int sigma
     ) {
-        Spectrum smoothed = service.getSmoothed(algorithm, windowSize, iterations, sigma);
+        Spectrum smoothed = service.getSmoothedById(spectrumId, algorithm, windowSize, iterations, sigma);
         return ResponseEntity.ok(smoothed);
     }
 
-    //Get "/background"
+
     @GetMapping("background")
     public ResponseEntity<Spectrum> getBackground(
+            @RequestHeader("X-Spectrum-Id") Long spectrumId,
             @RequestParam(defaultValue = "original") String source
     ) {
-        return ResponseEntity.ok(service.getBackground(source));
+        return ResponseEntity.ok(service.getBackgroundById(spectrumId, source));
     }
 
-    //Get "/isotopes"
+
     @GetMapping("isotopes")
-    public List<Isotop> isotopes() {
+    public List<Isotop> isotopes(@RequestHeader(value = "X-Spectrum-Id", required = false) Long spectrumId) {
         return service.getIsotopes();
     }
 
-    //Get"/custom"
+
     @GetMapping("custom")
     public ResponseEntity<Spectrum> getCustom(
+            @RequestHeader("X-Spectrum-Id") Long spectrumId,
             @RequestParam(required = false) String isotopes,
             @RequestParam(defaultValue = "custom") String source
     ) {
@@ -75,14 +79,14 @@ public class ApiController {
                     .filter(s -> !s.isEmpty())
                     .toList();
         }
-        Spectrum result = service.getCustom(source, selected);
+        Spectrum result = service.getCustomById(spectrumId, source, selected);
         return (result == null) ? ResponseEntity.status(HttpStatus.BAD_REQUEST).build() : ResponseEntity.ok(result);
     }
 
-    //Get "/peaks"
+
     @GetMapping("peaks")
-    public RoiDTO[] peaks() {
-        return service.getPeaks();
+    public RoiDTO[] peaks(@RequestHeader("X-Spectrum-Id") Long spectrumId) {
+        return service.getPeaksById(spectrumId);
     }
 
     //POST "/" -> File-Upload (Multipart "file") returns variants[0]
@@ -105,6 +109,21 @@ public class ApiController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Upload/Parse failed: " + e.getMessage());
         }
+    }
+
+    @GetMapping("spectrum/delete")
+    public ResponseEntity<Void> deleteSpectrum(@RequestHeader("X-Spectrum-Id") Long spectrumId) {
+        service.delSpectrum(spectrumId);
+        log.info("Deleted spectrum with ID : {}", spectrumId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("spectrum/rename")
+    public ResponseEntity<Void> renameSpectrum(@RequestHeader("X-Spectrum-Id") Long spectrumId,
+                                                @RequestParam("newName") String newName) {
+        service.renameSpectrum(spectrumId, newName);
+        log.info("Renamed spectrum with ID : {} to new name: {}", spectrumId, newName);
+        return ResponseEntity.noContent().build();
     }
 
     //Clean error handling if spectrum is not loaded

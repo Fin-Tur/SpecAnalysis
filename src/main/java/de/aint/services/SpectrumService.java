@@ -34,8 +34,6 @@ public class SpectrumService {
 
     private final ResourceLoader resourceLoader;
     private final SpectrumPersistanceService spectrumPersistanceService;
-    private final java.util.concurrent.atomic.AtomicReference<Spectrum> spec = new java.util.concurrent.atomic.AtomicReference<>(null);
-    private final Spectrum[] variants = new Spectrum[]{null, null, null, null};
     private final Map<String, Spectrum> spectrumCache = new ConcurrentHashMap<>();
 
     private final int[] channels = {1677, 391, 3722, 5740};
@@ -67,8 +65,28 @@ public class SpectrumService {
         return spectrumPersistanceService.save(name, spectrum);
     }
 
-    public Spectrum getCurrentSpectrum() {
-        return spec.get();
+    @Transaction 
+    public void delSpectrum(Long id) {
+        if(spectrumPersistanceService.getByID(id) != null) {
+            spectrumPersistanceService.delete(id);
+        }else{
+            throw new IllegalArgumentException("Invalid spectrum ID");
+        }
+    }
+
+    @Transaction
+    public void renameSpectrum(Long id, String newName) {
+        Spectrum spectrum = spectrumPersistanceService.getByID(id);
+        if (spectrum == null) {
+            throw new IllegalArgumentException("Invalid spectrum ID");
+        }
+        spectrum.setName(newName);
+        spectrumPersistanceService.update(spectrum);
+
+    }
+
+    public Spectrum getSpectrumByID(Long id) {
+        return spectrumPersistanceService.getByID(id);
     }
 
     public List<Isotop> getIsotopes() {
@@ -77,58 +95,76 @@ public class SpectrumService {
 
     public Spectrum uploadAndParse(File file) throws IOException {
         Spectrum s = Reader.readFile(file.getAbsolutePath());
+        s.setName(file.getName());
         s.changeEnergyCal(channels, energies);
-        this.spec.set(s);
 
+        String name = s.getName();
+        log.info("Uploaded and computed Spectrum: "+name);
+
+        //Pre-Compute Basic Variants
         Spectrum[] v = SpectrumBuilder.createSpectrumVariants(s);
-        System.arraycopy(v, 0, variants, 0, variants.length);
 
-        spectrumCache.put("original", s);
-        spectrumCache.put("smoothed_window" + FittingData.GenericOpts.sgWindowSize + "_poly2_outliersTrue_iters" + FittingData.GenericOpts.sgIters, v[1]);
-        spectrumCache.put("als_default_lambda" + FittingData.GenericOpts.lambda + "_p" + FittingData.GenericOpts.p + "_maxIters" + FittingData.GenericOpts.maxIter, v[2]);
-        spectrumCache.put("als_smoothed_lambda" + FittingData.GenericOpts.lambda + "_p" + FittingData.GenericOpts.p + "_maxIters" + FittingData.GenericOpts.maxIter, v[3]);
+        spectrumCache.put(name, s);
+        spectrumCache.put(name+"_smoothed_window" + FittingData.GenericOpts.sgWindowSize + "_poly2_outliersTrue_iters" + FittingData.GenericOpts.sgIters, v[1]);
+        spectrumCache.put(name+"_als_default_lambda" + FittingData.GenericOpts.lambda + "_p" + FittingData.GenericOpts.p + "_maxIters" + FittingData.GenericOpts.maxIter, v[2]);
+        spectrumCache.put(name+"_als_smoothed_lambda" + FittingData.GenericOpts.lambda + "_p" + FittingData.GenericOpts.p + "_maxIters" + FittingData.GenericOpts.maxIter, v[3]);
 
-        return v[0];
+        return s;
     }
 
-    private void ensureSpectrumLoaded() {
-        if (spec.get() == null) {
-            throw new IllegalStateException("Kein Spektrum geladen. Bitte zuerst per POST / uploaden.");
+    private Spectrum ensureSpectrumLoaded(Long id) {
+        Spectrum s = getSpectrumByID(id);
+        if (s == null) {
+            throw new IllegalStateException("No Spectrum is loaded. please select/upload Spectrum first.");
         }
+        return s;
     }
 
-    public Spectrum getSmoothed(String algorithm, int windowSize, int iterations, int sigma) {
-        ensureSpectrumLoaded();
+    public Spectrum getSmoothedById(Long id, String algorithm, int windowSize, int iterations, int sigma) {
+        Spectrum s = ensureSpectrumLoaded(id);
+        String name = s.getName();
         if ("SG".equalsIgnoreCase(algorithm)) {
-            String key = "smoothed_window" + windowSize + "_poly2_outliersTrue_iters" + iterations;
+            String key = name+"_smoothed_window" + windowSize + "_poly2_outliersTrue_iters" + iterations;
             return spectrumCache.computeIfAbsent(key,
-                    k -> SpectrumBuilder.createSmoothedSpectrumUsingSG(spec.get(), windowSize, 2, true, iterations));
+                    k -> SpectrumBuilder.createSmoothedSpectrumUsingSG(s, windowSize, 2, true, iterations));
         } else {
-            String key = "Gauss_sigma" + sigma;
+            String key = name+"_Gauss_sigma" + sigma;
             return spectrumCache.computeIfAbsent(key,
-                    k -> SpectrumBuilder.createSmoothedSpectrumUsingGauss(spec.get(), sigma));
+                    k -> SpectrumBuilder.createSmoothedSpectrumUsingGauss(s, sigma));
         }
     }
 
-    public Spectrum getBackground(String source) {
-        ensureSpectrumLoaded();
-        return "smoothed".equalsIgnoreCase(source) ? variants[3] : variants[2];
+    public Spectrum getBackgroundById(Long id, String source) {
+        Spectrum s = ensureSpectrumLoaded(id);
+        String name = s.getName();
+        if(source.equalsIgnoreCase("smoothed")){
+            String key = name+"_als_smoothed_lambda" + FittingData.GenericOpts.lambda + "_p" + FittingData.GenericOpts.p + "_maxIters" + FittingData.GenericOpts.maxIter;
+            return spectrumCache.computeIfAbsent(key,
+                    k -> SpectrumBuilder.createBackgroundSpectrum(s));
+        }else{
+            String key = name+"_als_default_lambda" + FittingData.GenericOpts.lambda + "_p" + FittingData.GenericOpts.p + "_maxIters" + FittingData.GenericOpts.maxIter;
+            return spectrumCache.computeIfAbsent(key,
+                    k -> SpectrumBuilder.createBackgroundSpectrum(s));
+        }
+
+        
     }
 
-    public Spectrum getCustom(String source, List<String> selectedIsotopes) {
-        ensureSpectrumLoaded();
+    public Spectrum getCustomById(Long id, String source, List<String> selectedIsotopes) {
+        Spectrum s = ensureSpectrumLoaded(id);
+        Spectrum[] variants = SpectrumBuilder.createSpectrumVariants(s);
         if ("isotopes".equalsIgnoreCase(source)) {
             return SpectrumBuilder.createCustomSpectrum(variants[3], new ArrayList<>(selectedIsotopes), isotopeReader);
         } else if ("peaks".equalsIgnoreCase(source)) {
-            ROI[] rois = PeakDetection.splitSpectrumIntoRois(variants[0]);
+            ROI[] rois = PeakDetection.splitSpectrumIntoRois(s);
             return SpectrumBuilder.createPeakFitSpectrum(variants[3], rois);
         }
         return null;
     }
 
-    public RoiDTO[] getPeaks() {
-        ensureSpectrumLoaded();
-        ROI[] rois = PeakDetection.splitSpectrumIntoRois(variants[0]);
+    public RoiDTO[] getPeaksById(Long id) {
+        Spectrum s = ensureSpectrumLoaded(id);
+        ROI[] rois = PeakDetection.splitSpectrumIntoRois(s);
         for (var roi : rois) roi.setAreaOverBackground();
         return Arrays.stream(rois).map(RoiDTO::new).toArray(RoiDTO[]::new);
     }

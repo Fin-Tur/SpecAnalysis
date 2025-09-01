@@ -1,9 +1,10 @@
 
 let projects = [];
+var hostURL = "http://localhost:7000"
 
 
 function fetchProjects() {
-    fetch("/projects")
+    fetch(hostURL + "/projects")
         .then(response => response.json())
         .then(data => {
             projects = data;
@@ -13,7 +14,7 @@ function fetchProjects() {
 
 function addProject(name) {
     if (!name || !name.trim()) return;
-    fetch('/projects', {
+    fetch(hostURL + "/projects", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.trim() })
@@ -37,7 +38,7 @@ function deleteProject(name){
     if(!name){
         return;
     }
-    fetch("/projects/" + name + "/del", {
+    fetch(hostURL + "/projects/" + name + "/del", {
         method: "GET"
     })
     .then(response => {

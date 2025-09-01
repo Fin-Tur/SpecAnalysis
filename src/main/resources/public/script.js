@@ -14,7 +14,7 @@ window.spectra = [];           // [{ id, name, fileName, data }]
 window.activeSpectrumIdx = null;
 var projectName = "";
 
-// Small helpers
+//Small helpers
 const API_BASE = "http://localhost:7000";
 const $ = (sel, root=document) => root.querySelector(sel);
 const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
@@ -36,23 +36,25 @@ function loadProjectInformationAndSpectra(){
     projectName = new URLSearchParams(window.location.search).get('project');
 
   if (projectName) {
-  fetch(API_BASE + "/projects/" + encodeURIComponent(projectName))
-    .then(res => res.json())
-    .then(spectraList => {
-      window.spectra = [];
-      spectraList.forEach((spec, idx) => {
-        window.spectra.push({
-          name: spec.name || `Spectrum ${idx+1}`,
-          fileName: spec.fileName || spec.name || 'Untitled',
-          data: spec,
-          id: Date.now() + Math.random().toString(36).slice(2)
+    fetch(API_BASE + "/projects/" + encodeURIComponent(projectName))
+      .then(res => res.json())
+      .then(spectraList => {
+        window.spectra = [];
+        spectraList.forEach(spec => {
+          // Use backend ID for all further requests
+          window.spectra.push({
+            name: spec.name || `Spectrum ${window.spectra.length + 1}`,
+            fileName: spec.fileName || spec.name || 'Untitled',
+            data: spec,
+            id: spec.id, // Use backend ID
+
+          });
         });
-      });
-      if (window.spectra.length > 0) setActiveSpectrum(0);
-      renderSpectrumSidebar();
-    })
-    .catch(() => alert('Error loading project '+projectName));
-}
+        if (window.spectra.length > 0) setActiveSpectrum(0);
+        renderSpectrumSidebar();
+      })
+      .catch(() => alert('Error loading project '+projectName));
+  }
 }
 
 // -----------------------------
@@ -60,25 +62,32 @@ function loadProjectInformationAndSpectra(){
 // -----------------------------
 function addSpectrum(spectrum, name, fileName) {
 
-    fetch('/projects/addSpectrum?projectName=' + encodeURIComponent(projectName) + '&spectrumName=' + encodeURIComponent(name || fileName), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(spectrum)
-        }).then(response => {
-            if (!response.ok) {
-            return response.text().then(msg => { throw new Error(msg); });
+  // Add a new spectrum to the project and use the backend ID for future requests
+  fetch(API_BASE + '/projects/addSpectrum?projectName=' + encodeURIComponent(projectName) + '&spectrumName=' + encodeURIComponent(name || fileName), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(spectrum)
+  })
+  .then(response => {
+    if (!response.ok) {
+      console.log("Error adding spectrum:", response.statusText);
+      return response.text().then(msg => { throw new Error(msg); });
     }
-    return response.text();
-    }).then(
-        window.spectra.push({
-        name: name || fileName || `Spectrum ${window.spectra.length + 1}`,
-        fileName: fileName || `Untitled`,
-        data: spectrum,
-        id: Date.now() + Math.random().toString(36).slice(2)
-    })
-    ).catch(err => alert('Error: ' + err.message));
-        setActiveSpectrum(window.spectra.length - 1);
-        renderSpectrumSidebar();
+    //Expect backend to return the new spectrum with its ID
+    return response.json();
+  })
+  .then(backendSpec => {
+    window.spectra.push({
+      name: backendSpec.name || name || fileName || `Spectrum ${window.spectra.length + 1}`,
+      fileName: backendSpec.fileName || fileName || `Untitled`,
+      data: backendSpec,
+      id: backendSpec.id
+    });
+    console.log("Added spectrum w ID: ", backendSpec.id); //HERE
+    setActiveSpectrum(window.spectra.length - 1);
+    renderSpectrumSidebar();
+  })
+  .catch(err => alert('Error: ' + err.message));
 }
 
 
@@ -96,8 +105,8 @@ function setActiveSpectrum(idx) {
 
 //TODO
 function removeSpectrum(idx) {
+  const current = window.spectra[idx];
   if (idx === window.activeSpectrumIdx) {
-    // remove and reset active idx
     window.spectra.splice(idx, 1);
     window.activeSpectrumIdx = window.spectra.length ? 0 : null;
   } else {
@@ -106,6 +115,14 @@ function removeSpectrum(idx) {
       window.activeSpectrumIdx -= 1;
     }
   }
+  console.log("Deleting spectrum with ID:", current.id);
+  fetch(API_BASE+"/spectrum/delete", {headers: {"X-Spectrum-Id": current.id}}).then(
+    response => {
+      if(!response.ok) {
+        console.error("Error deleting spectrum on backend: " + response.statusText);
+      }
+    }
+  );
   renderSpectrumSidebar();
   updateFileNameLabel();
   plotSelectedSpectra();
@@ -114,11 +131,21 @@ function removeSpectrum(idx) {
 //TODO
 function renameSpectrum(idx) {
   const current = window.spectra[idx];
+  console.log("Renaming spectrum with ID:", current.id);
   const name = prompt("Rename spectrum:", current?.name ?? "");
   if (!name) return;
-  current.name = name;
-  renderSpectrumSidebar();
-  updateFileNameLabel();
+
+  fetch(API_BASE+"/spectrum/rename?newName=" + encodeURIComponent(name), {headers: {"X-Spectrum-Id": current.id}}).then(
+    response => {
+      if (!response.ok) {
+        alert("Error renaming spectrum on backend: " + response.statusText);
+      }else{
+        current.name = name;
+      }
+      renderSpectrumSidebar();
+      updateFileNameLabel();
+    }
+  );
 }
 
 function renderSpectrumSidebar() {
@@ -193,9 +220,11 @@ const spectrumOptions = [
   { endpoint: "/smbackground", name: "SM Background", color: "#f1faee", hasIterations: false }
 ];
 
-function fetchSpectrum(endpoint, iterations, windowSize, sigma, backgroundSource, customSource, customIsotopes) {
+async function fetchSpectrum(endpoint, iterations, windowSize, sigma, backgroundSource, customSource, customIsotopes) {
   const active = window.spectra[window.activeSpectrumIdx];
-  if (!active) return Promise.resolve(null);
+  if (!active) {
+    return Promise.resolve(null);
+  }
 
   if (endpoint === "/") {
     // original -> we already have it in memory
@@ -232,7 +261,7 @@ function fetchSpectrum(endpoint, iterations, windowSize, sigma, backgroundSource
 
   if (params.length) url += "?" + params.join("&");
 
-  return fetch(url, { headers: { "X-Spectrum-Id": active.id } }).then(safeJson);
+  return await fetch(url, { headers: { "X-Spectrum-Id": active.id } }).then(safeJson);
 }
 
 // -----------------------------
@@ -267,7 +296,7 @@ function plotSelectedSpectra() {
         const sel = $('.custom-source[data-endpoint="/custom"]');
         customSource = sel ? sel.value : null;
       }
-      return fetchSpectrum(opt.endpoint, iterations, windowSize, sigma, backgroundSource, customSource, customIsotopes)
+      return  fetchSpectrum(opt.endpoint, iterations, windowSize, sigma, backgroundSource, customSource, customIsotopes)
         .then(data => ({ ...opt, data }));
     });
 
@@ -292,7 +321,7 @@ function plotSelectedSpectra() {
 
     if (window.Plotly) Plotly.newPlot(plotDivId, traces, layout, { responsive: true });
   }).catch(err => {
-    console.error(err);
+    console.error("TEST");
     alert("Plot failed: " + err.message);
   });
 }

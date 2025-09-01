@@ -39,6 +39,16 @@ public class SpectrumEntity {
         this.countsJson = countsJson;
     }
 
+    public SpectrumEntity(Long id, String name, double ec_offset, double ec_slope, double ec_quad, double srcForce, String countsJson) {
+        this.id = id;
+        this.name = name;
+        this.ec_offset = ec_offset;
+        this.ec_slope = ec_slope;
+        this.ec_quad = ec_quad;
+        this.srcForce = srcForce;
+        this.countsJson = countsJson;
+    }
+
     //Getters
     public Long getId() {
         return id;
@@ -68,8 +78,16 @@ public class SpectrumEntity {
         return countsJson;
     }
 
+    public ProjectEntity getProjectEntity() {
+        return project;
+    }
+
     //Setters
     public void setProject(ProjectEntity project) {
         this.project = project;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 }

@@ -19,6 +19,7 @@ public class SpectrumPersistanceService {
     public Long save(String name, Spectrum spec){
         SpectrumEntity entity = spectrumMapper.toEntity(name, spec);
         spectrumRepository.save(entity);
+        spec.setId(entity.getId());
         return entity.getId();
     }
 
@@ -27,5 +28,23 @@ public class SpectrumPersistanceService {
         SpectrumEntity entity = spectrumRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid spectrum ID"));
         return spectrumMapper.toDomain(entity);
+    }
+
+    @Transactional
+    public Spectrum getByID(Long id) {
+        SpectrumEntity entity = spectrumRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid spectrum ID"));
+        return spectrumMapper.toDomain(entity);
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        spectrumRepository.deleteById(id);
+    }
+
+    @Transactional
+    public void update(Spectrum spectrum) {
+        SpectrumEntity entity = spectrumMapper.toEntity(spectrum.getName(), spectrum);
+        spectrumRepository.save(entity);
     }
 }

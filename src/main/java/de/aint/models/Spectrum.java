@@ -6,6 +6,7 @@ import java.util.stream.IntStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.aint.models.Persistence.Project.ProjectEntity;
 import de.aint.operations.fitters.Fitter;
 import de.aint.operations.fitters.FittingData;
 
@@ -17,7 +18,9 @@ public class Spectrum {
     public Spectrum(){}
 
     public String name;
-    
+    private Long id;
+    private Long projectId;
+
     private static final Logger logger = LoggerFactory.getLogger(Spectrum.class);
 
     
@@ -62,7 +65,8 @@ public class Spectrum {
     }
 
     //Overloading for Domain/Entity Mapping
-    public Spectrum(String name, double[] counts, double ec_offset, double ec_slope, double ec_quad, double srcForce){
+    public Spectrum(Long id, String name, double[] counts, double ec_offset, double ec_slope, double ec_quad, double srcForce){
+        this.id = id;
         this.name = name;
         this.channel_count = counts.length;
         this.counts = Arrays.copyOf(counts, counts.length);
@@ -201,6 +205,22 @@ public class Spectrum {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getProjectId() {
+        return projectId;
+    }
+
+    public void setProjectId(Long projectId) {
+        this.projectId = projectId;
     }
 
 }

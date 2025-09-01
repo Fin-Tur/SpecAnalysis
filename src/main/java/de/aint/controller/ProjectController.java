@@ -73,14 +73,15 @@ public class ProjectController {
 
     @RequestMapping("addSpectrum")
     @PostMapping(consumes = "application/json")
-    public ResponseEntity<String> addSpectrum(@RequestBody Spectrum spectrum, @RequestParam String projectName, @RequestParam String spectrumName) {
-        System.out.println("Adding spectrum: " + spectrumName + " to project: " + projectName);
-        if(spectrum == null || spectrumName == null || projectName == null) return ResponseEntity.badRequest().body("Invalid spectrum data.");
+    public ResponseEntity<Spectrum> addSpectrum(@RequestBody Spectrum spectrum, @RequestParam String projectName, @RequestParam String spectrumName) {
+        if(spectrum == null || spectrumName == null || projectName == null) return ResponseEntity.badRequest().build();
         Long specID = spectrumService.addSpectrum(spectrumName, spectrum);
         Long projID = projectService.getIDFromName(projectName);
         projectService.addSpectrumToProject(projID, specID);
-        logger.info("Added spectrum: {} to project: {}", spectrumName, projectName);
-        return ResponseEntity.status(HttpStatus.CREATED).body("Spectrum added to project.");
+        logger.info("Added spectrum: {}, ID : {} to project: {}", spectrumName, specID, projectName);
+        Spectrum saved = spectrumService.getSpectrumByID(specID);
+        logger.info("Returning spectrum: {}", saved.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     @ExceptionHandler(IllegalStateException.class)

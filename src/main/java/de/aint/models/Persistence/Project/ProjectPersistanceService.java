@@ -82,4 +82,9 @@ public class ProjectPersistanceService {
                 .map(spectrumMapper::toDomain)
                 .toList();
     }
+
+    @Transactional
+    public ProjectEntity findById(Long id) {
+        return projectRepository.findById(id).orElseThrow();
+    }
 }
