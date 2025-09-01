@@ -101,7 +101,7 @@ function renderProjectList() {
             window.location.href = `index.html?project=${encodeURIComponent(project)}`;
         };
         const delBtn = document.createElement('button');
-        delBtn.textContent = 'Delete';
+        delBtn.textContent = '🗑️';
         delBtn.className = 'delete-project-btn';
         delBtn.onclick = function() {
             if (confirm("Are you sure you want to delete this project?")) {

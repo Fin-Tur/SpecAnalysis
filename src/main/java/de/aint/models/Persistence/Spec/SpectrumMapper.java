@@ -12,11 +12,11 @@ import de.aint.models.Persistence.Project.ProjectPersistanceService;
 @Component
 public class SpectrumMapper {
     private final ObjectMapper mapper = new ObjectMapper();
-    ProjectPersistanceService projectPersistanceService;
 
-    public SpectrumMapper(@Lazy ProjectPersistanceService projectPersistanceService) {
-        this.projectPersistanceService = projectPersistanceService;
-    }
+    @Autowired
+    @Lazy
+    private ProjectPersistanceService projectPersistanceService;
+
 
     public SpectrumEntity toEntity(String name, Spectrum spec){
         try{
