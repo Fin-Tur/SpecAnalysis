@@ -6,8 +6,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Scanner;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 abstract public class Reader {
 
+    private static final Logger logger = LoggerFactory.getLogger(Reader.class);
 
     public abstract Spectrum readSpectrum(String src) throws IOException;
 
@@ -29,13 +33,16 @@ abstract public class Reader {
             try{
                 Spectrum spec = mncpReader.readSpectrum(src);
                 spec.setSrcForce(cntMult);
+                logger.info("Read MCNP spectrum from file: {}", src);
                 return spec;
             } catch(IOException ioE){
+                logger.error("Error reading MCNP spectrum from file: {}", src, ioE);
                 return null;
             }
 
 
         }
+        logger.error("Unsupported file format: {}", f.getName());
         return null;
     }
 

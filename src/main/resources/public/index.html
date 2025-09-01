@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Spectral Analysis</title>
+
+  <!-- Plotly -->
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+  <!-- Your styles -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app layout" style="display:flex; flex-direction:row; min-height:100vh;">
+    <!-- Sidebar: spectra management -->
+    <aside id="spectrumSidebar"
+           class="sidebar"
+           style="width:260px; background:#f0efeb; border-right:2px solid #bfc0c0; padding:18px 10px 10px; display:flex; flex-direction:column; gap:18px;">
+      <h2 style="margin-top:0; margin-left: 85px;">Spectra</h2>
+      <a href="javascript:history.back()">
+        <button class="custom-file-btn" style="margin-bottom:10px;">📁</button>
+      </a>
+      <button id="addSpectrumBtn" class="custom-file-btn" style="margin-bottom:10px;">Add Spectrum</button>
+      <input type="file" id="fileInput" accept=".spe, .mcnp" style="display:none;" />
+
+      <ul id="spectrumList" style="list-style:none; padding:0; margin:0; flex:1 1 auto; overflow-y:auto;"></ul>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main" style="flex:1 1 auto; padding:0 24px;">
+      <h1>Spectral Analysis</h1>
+
+      <!-- Top bar: filename + page switch -->
+      <div class="top-bar" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <span id="fileName" class="file-name-label"></span>
+
+        <label for="pageSelect" class="visually-hidden">SpectralAnalysisv1.0</label>
+        <select class="page-select" id="pageSelect">
+          <option value="plot">Plot</option>
+          <option value="isotopes">Isotopes</option>
+          <option value="peaks">Peaks</option>
+        </select>
+      </div>
+
+      <!-- Plot page -->
+      <section id="plotPage" aria-label="Plot page">
+        <div class="checkbox-group" style="display:flex; gap:16px; flex-wrap:wrap; align-items:center;">
+          <!-- Original -->
+          <label class="checkbox-label" style="display:flex; align-items:center; gap:6px;">
+            <input type="checkbox" class="spectrum-checkbox" value="/" checked />
+            Original
+          </label>
+
+          <!-- Custom (source select controls endpoint /custom) -->
+          <label class="checkbox-label" style="display:flex; align-items:center; gap:6px;">
+            <input type="checkbox" class="spectrum-checkbox" value="/custom" />
+            Custom
+            <select class="custom-source"
+                    data-endpoint="/custom"
+                    style="margin-left:10px; height:22px; border-radius:8px; border:1.5px solid #bfc0c0; background:#f0efeb; font-size:0.85em; color:#22223b;">
+              <option value="isotopes">Isotopes</option>
+              <option value="peaks">Peaks</option>
+            </select>
+          </label>
+
+          <!-- Smoothed (with settings button + overlay) -->
+          <label class="checkbox-label" style="display:flex; align-items:center; gap:6px;">
+            <input type="checkbox" class="spectrum-checkbox" value="/smoothed" checked />
+            Smoothed
+            <button id="smoothedSettingsBtn"
+                    type="button"
+                    class="settings-btn"
+                    title="Smoothed settings"
+                    style="margin-left:8px;">⚙️</button>
+          </label>
+
+          <!-- Smoothed Settings Overlay (kept display:none for script.js compatibility) -->
+          <div id="smoothedSettingsOverlay" class="settings-overlay" style="display:none;">
+            <div class="settings-content">
+              <h3>Smoothed Settings</h3>
+
+              <label>Algorithm:
+                <select class="algorithm-select" data-endpoint="/smoothed" id="smoothedAlgorithmSelect">
+                  <option value="SG">Savitzky-Golay</option>
+                  <option value="Gauss">Gauss</option>
+                </select>
+              </label>
+
+              <!-- SG parameters -->
+              <div id="sgSettings">
+                <label>Iterations:
+                  <input type="number"
+                         class="iteration-input"
+                         data-endpoint="/smoothed"
+                         value="5" min="1" max="100" step="1"
+                         style="width:60px;"
+                         title="Iterations" />
+                </label>
+                <label>Window size:
+                  <input type="number"
+                         class="window-input"
+                         data-endpoint="/smoothed"
+                         value="11" min="3" max="101" step="2"
+                         style="width:60px;"
+                         title="Window Size" />
+                </label>
+              </div>
+
+              <!-- Gauss parameters -->
+              <div id="gaussSettings" style="display:none;">
+                <label>Sigma:
+                  <input type="number"
+                         class="sigma-input"
+                         data-endpoint="/smoothed"
+                         value="4" min="2" max="14" step="1"
+                         style="width:60px;"
+                         title="Sigma" />
+                </label>
+              </div>
+
+              <div style="margin-top:18px; text-align:right;">
+                <button id="smoothedSettingsClose" type="button" class="settings-close-btn">OK</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Background (source select controls endpoint /background) -->
+          <label class="checkbox-label" style="display:flex; align-items:center; gap:6px;">
+            <input type="checkbox" class="spectrum-checkbox" value="/background" />
+            Background
+            <select class="background-source"
+                    data-endpoint="/background"
+                    style="margin-left:10px; height:22px; border-radius:8px; border:1.5px solid #bfc0c0; background:#f0efeb; font-size:0.85em; color:#22223b;">
+              <option value="original">Original</option>
+              <option value="smoothed">Smoothed</option>
+            </select>
+          </label>
+        </div>
+
+        <div id="plot" style="width:100%; height:600px;"></div>
+      </section>
+
+      <!-- Isotopes page -->
+      <section id="isotopePage" aria-label="Isotope page" style="display:none;">
+        <h2>Isotope Information</h2>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <input type="text"
+                 id="elementSearch"
+                 placeholder="Element symbol (e.g., H, He, Li)"
+                 autocomplete="off"
+                 class="element-search" />
+          <button id="clearSelectedIsotopes" class="clearSelectedIsotopes">Clear</button>
+        </div>
+        <div id="isotopeInfo" style="margin-top:12px;">Loading isotopes...</div>
+      </section>
+
+      <!-- Peaks page -->
+      <section id="peakPage" aria-label="Peak page" style="display:none;">
+        <h2>Peak Information</h2>
+        <div id="foundElements" style="margin-top:24px;"></div>
+        <div id="peakInfo">Searching for peaks...</div>
+      </section>
+    </main>
+  </div>
+
+  <!-- App script -->
+  <script src="script.js"></script>
+</body>
+</html>

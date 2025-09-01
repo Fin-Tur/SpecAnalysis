@@ -6,12 +6,19 @@ import de.aint.operations.*;
 import de.aint.operations.calculators.Calculator.CalculatingAlgos;
 import de.aint.readers.IsotopeReader;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class PeakDetection {
 
-    public static ArrayList<Peak> detectPeaks(Spectrum spec){
+    private static final Logger logger = LoggerFactory.getLogger(PeakDetection.class);
+
+    private static ArrayList<Peak> detectPeaksUsingMaxima(Spectrum spec){
 
             ArrayList<Peak> peaks = new ArrayList<>();
             Spectrum smoothed = SpectrumBuilder.createSmoothedSpectrumUsingSG(spec, 0, 0, true, 0);
@@ -27,14 +34,15 @@ public class PeakDetection {
             for(int i = 1; i<counts.length - 1; i++) {
                 //Initialize treshhold
                 double treshhold = backgroundCnt[i] + 1.65f * Math.sqrt(backgroundCnt[i]);
-                if(counts[i] > counts[i - 1] && counts[i] > counts[i + 1] && counts[i] > treshhold && energy[i] < 10000) {
+                if(counts[i] > counts[i - 1] && counts[i] > counts[i + 1] && counts[i] > treshhold && energy[i] < 9500) {
                     // Found a peak
                     peaks.add(new Peak(energy[i]));
                 }
             }
 
         //Match Peaks w Isotopes
-        IsotopeReader isotopeReader = new IsotopeReader("C:\\Users\\f.willems\\Projects\\SpecAnalysis\\src\\main\\resources\\isotop_details.txt");
+        Path isoPath = Paths.get("src/main/resources/isotop_details.txt");
+        IsotopeReader isotopeReader = new IsotopeReader(isoPath.toString());
         isotopeReader.readIsotopes();
         for(Peak peak : peaks) {
             Isotop matchedIso = MatchPeakWithIsotop.matchRoiWithIsotop(peak, isotopeReader, 1);
@@ -44,12 +52,14 @@ public class PeakDetection {
 
 
         //Return peaks
+        logger.info("Detected {} peaks in spectrum and matched isotopes", peaks.size());
         return peaks;
     }
 
 
+
     public static ROI[] splitSpectrumIntoRois(Spectrum spec) {
-        ArrayList<Peak> peaks = PeakDetection.detectPeaks(spec);
+        ArrayList<Peak> peaks = PeakDetection.detectPeaksUsingMaxima(spec);
         ArrayList<ROI> rois = new ArrayList<>();
 
         while(!peaks.isEmpty()) {
@@ -66,10 +76,11 @@ public class PeakDetection {
                 endEnergy = Math.min(spec.getEnergy_per_channel()[spec.getChannel_count() - 1], nextPeak.getPeakCenter() + FWHM);
                 currentPeaks.add(nextPeak);
             }
-
-            rois.add(new ROI(spec, currentPeaks.toArray(new Peak[0]), startEnergy, endEnergy));
+            ROI roi = new ROI(spec, currentPeaks.toArray(new Peak[0]), startEnergy, endEnergy);
+            rois.add(roi);
         }
 
+        logger.info("Split spectrum into {} ROIs", rois.size());
         return rois.toArray(new ROI[0]);
     }
  

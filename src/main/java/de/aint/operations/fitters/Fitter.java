@@ -12,6 +12,8 @@ import org.apache.commons.math3.linear.DecompositionSolver;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.aint.libraries.SmoothingLib;
 import de.aint.models.ROI;
@@ -22,7 +24,7 @@ import de.aint.operations.Helper;
 
 public abstract class Fitter {
 
-
+    private static final Logger logger = LoggerFactory.getLogger(Fitter.class);
 
 //INTERFACE FOR FITTING ALGORITHMS
  interface FitAlgo {
@@ -82,10 +84,10 @@ public enum SmoothingFitAlgos implements FitAlgo {
 
 public enum PeakFitAlgos implements PeakFitAlgo {
 
-    GAUSS{
+    GAUSSLM{
         @Override
         public double[] fit(ROI roi) {
-            return null;//RunAlgos.fitGaussCurveToRoi(roi);
+            return RunAlgos.fitGaussToROIUsingLM(roi);
         }
     }
 
@@ -93,42 +95,44 @@ public enum PeakFitAlgos implements PeakFitAlgo {
 
 private static class RunAlgos{
 
-    //================================================GAUSS-PEAK-FITTER===================================================
-    // !!! returns Gauss Curve params !!!
-    /*private static double[] fitGaussCurveToRoi(ROI roi){
-        double[] counts = roi.getSpectrum().getCounts();
-        int startChannel = Helper.findChannelFromEnergy(roi.getStartEnergy(), roi.getSpectrum().getEnergy_per_channel());
-        int endChannel = Helper.findChannelFromEnergy(roi.getEndEnergy(), roi.getSpectrum().getEnergy_per_channel());
-        int centerChannel = Helper.findChannelFromEnergy(roi.getPeakCenter(), roi.getSpectrum().getEnergy_per_channel());
 
-        int len = endChannel - startChannel;
-        if(len == 0) len = 1;
-        System.out.println(len);
+    //=================================================LM-GAUSS-PEAK-FITTER==================================================
+    // !!! return params [B, sigma, A1, mu1, T1, G1, ..., An, mun, Tn, Gn] !!!
+    public static double[] fitGaussToROIUsingLM(ROI roi){
 
-        //Create a Gaussian fitter
-        ArrayList<WeightedObservedPoint> obs = new ArrayList<>();
-        for (int i = startChannel; i <= endChannel; i++) {
-            if (i >= 0 && i < counts.length) {
-                double weight = 1 - (Math.abs(centerChannel - i)/(len/2.0));
-                System.out.println("Weight: "+weight);
-                WeightedObservedPoint point = new WeightedObservedPoint(weight, i, counts[i]);
-                obs.add(point);
-            }
+        //Prepare ROI for Gauss fitting
+        if(roi.getSpectrum().getBackgroundCounts() == null || roi.getSpectrum().getBackgroundCounts().length == 0) roi.getSpectrum().setBackgroundCounts();
+        int channelBeg = Helper.findChannelFromEnergy(roi.getStartEnergy(), roi.getSpectrum().getEnergy_per_channel());
+        int channelEnd = Helper.findChannelFromEnergy(roi.getEndEnergy(), roi.getSpectrum().getEnergy_per_channel());
+        double[] E = Arrays.copyOfRange(roi.getSpectrum().getEnergy_per_channel(), channelBeg, channelEnd+1);
+        double[] y = Arrays.copyOfRange(roi.getSpectrum().getCounts(), channelBeg, channelEnd+1);
+        double[] background = Arrays.copyOfRange(roi.getSpectrum().getBackgroundCounts(), channelBeg, channelEnd+1);
+
+        //Guess initial Parameters
+        double[] start = new double[2 + 5 * (roi.getPeaks().length)];
+        double[] muSet = new double[roi.getPeaks().length];
+        double[] Aset = new double[roi.getPeaks().length];
+        start[0] = (background[0]+background[background.length-1]) / 2 ; //Baseline
+        start[1] = roi.getSpectrum().getFwhmForNumber(Helper.findChannelFromEnergy(roi.getPeaks()[0].getPeakCenter(), roi.getSpectrum().getEnergy_per_channel())) / 2.35; //Sigma
+        for (int i = 0; i < roi.getPeaks().length; i++) {
+            start[2 + 5 * i] = roi.getSpectrum().getCounts()[Helper.findChannelFromEnergy(roi.getPeaks()[i].getPeakCenter(), roi.getSpectrum().getEnergy_per_channel())]-start[0]; //Amplitude
+            Aset[i] = roi.getSpectrum().getCounts()[Helper.findChannelFromEnergy(roi.getPeaks()[i].getPeakCenter(), roi.getSpectrum().getEnergy_per_channel())]-start[0];
+            start[3 + 5 * i] = roi.getPeaks()[i].getPeakCenter(); //Mu
+            muSet[i] = roi.getPeaks()[i].getPeakCenter(); //Store mu for projection
+            start[4 + 5 * i] = 0.5; //Relative Tailing Amplitude
+            start[5 + 5 * i] = 1.5; //Gradient of Tailing
+            start[6 + 5 * i] = 0.05; //Tailing Amplitude
         }
-        GaussianCurveFitter fitter = GaussianCurveFitter.create().withMaxIterations(100000);
-        // Fit the Gaussian curve to the observed points
-        double[] gaussParams = {0, roi.getPeakCenter(), 1};
 
-        try{
-            gaussParams = fitter.fit(obs);
-        }catch(Exception e){
-            System.err.println("Error fitting Gaussian curve: " + e.getMessage());
-        }
-           
         
+        double bSet = (background[0]+background[background.length-1]) / 2;
+        int maxIter = 100;
 
-        return gaussParams;
-    }*/
+        logger.info("Fitting Gaussian to ROI with {} peaks", roi.getPeaks().length);
+
+        return LMPeakFitting.fit(E, y, start, maxIter, bSet, muSet, Aset, LMPeakFitting.calculateWeight(E, y, muSet, 4.5, 2.0, start[1]));
+
+    }
 
     //==================================================GAUSS================================================================
 
@@ -146,7 +150,7 @@ private static class RunAlgos{
         double[] counts = spec.getCounts();
         double[] newCounts = new double[counts.length];
         double[] kernel = FitterHelper.createGaussKernel(sigma, windowSize);
-
+        
         for(int i = 0; i < counts.length; i++){
             double smoothedValue = 0.0;
             for(int j = i-radius; j <= i+radius; j++){
@@ -155,7 +159,7 @@ private static class RunAlgos{
             }
             newCounts[i] = smoothedValue;
         }
-
+        logger.info("Smoothed spectrum using Gaussian with sigma {}", sigma);
         return newCounts;
     }
 
@@ -207,7 +211,7 @@ private static class RunAlgos{
             half_window = (window_size-1)/2;
         }
 
-
+        logger.info("Smoothed spectrum using Savitzky-Golay with window size {} and polynomial degree {}", window_size, polynomial_degree);
         return smoothed_counts;
 
     }
@@ -254,7 +258,7 @@ private static class RunAlgos{
             if (delta < 1e-6) break;
 
         }
-
+        logger.info("Estimated background using ALS");
         return background;
     }
 
@@ -333,7 +337,7 @@ private static class RunAlgos{
             if (diff < data.p) break;
             weights = newWeights;
         }
-
+        logger.info("Estimated background using ARPLS");
         return background.toArray();
     }
 
@@ -350,6 +354,7 @@ private static class RunAlgos{
                 background[i] = 0; // Avoid log(0)
             }
         }
+        logger.info("Estimated background using Fast ALS");
         return background;
     }
 

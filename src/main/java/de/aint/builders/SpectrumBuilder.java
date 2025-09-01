@@ -1,77 +1,83 @@
 package de.aint.builders;
 
-import de.aint.detectors.SumGaussNumeric;
 import de.aint.models.*;
 import de.aint.operations.*;
-import de.aint.operations.calculators.Calculator.CalculatingAlgos;
 import de.aint.operations.fitters.*;
 import de.aint.readers.IsotopeReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import org.apache.commons.math3.special.Erf;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public abstract class SpectrumBuilder {
+public class SpectrumBuilder {
+
+    private static final Logger logger = LoggerFactory.getLogger(SpectrumBuilder.class);
+
+    private SpectrumBuilder() {
+        // private constructor to prevent instantiation
+    }
 
     //=====================PEAK_FITTING======================================
     public static Spectrum createPeakFitSpectrum(Spectrum spec, ROI[] rois) {
     double[] energies = spec.getEnergy_per_channel();   // E[i] in keV
     int n = energies.length;
 
-    // separate Fit-Kurve, damit das Original unangetastet bleibt
-    double[] fitCurve = new double[n];                  // nur die Summe der Gauss-Beiträge
-    boolean[] touched = new boolean[n];                 // welche Bins wurden von irgendeiner ROI beschrieben?
+    //original untouched
+    double[] fitCurve = new double[n];                  // sum of gaussians
+    boolean[] touched = new boolean[n];                 //which bins r written to
 
     for (ROI roi : rois) {
-        
-        double[] p = SumGaussNumeric.fitGaussToROI(roi);   // p = [B, σ, A1, μ1, T1, G1, A2, μ2, T2, G2, ...]
+        if(roi.getFitParams() == null || roi.getFitParams().length == 0){
+            try{
+                roi.fitGaussCurve();
+            } catch (Exception e){
+                logger.error("Error fitting ROI from {} keV to {} keV: {}", roi.getStartEnergy(), roi.getEndEnergy(), e.getMessage());
+                continue;
+            }
+        }
+        double[] p = roi.getFitParams(); // p = [B, σ, A1, μ1, T1, G1, A2, μ2, T2, G2, ...]
 
         double B   = p[0];
         double sigma = p[1];
-        int nPeaks = (p.length - 2) / 4;
+        int nPeaks = (p.length - 2) / 5;
 
-        // Kanalgrenzen der ROI (inklusive Ende!)
-        int i0 = Helper.findChannelFromEnergy(roi.getStartEnergy(), energies);
-        int i1 = Helper.findChannelFromEnergy(roi.getEndEnergy(),   energies);
-        if (i0 > i1) { int t=i0; i0=i1; i1=t; }
-        i0 = Math.max(0, i0);
-        i1 = Math.min(n-1, i1);
+        int iStart = Helper.findChannelFromEnergy(roi.getStartEnergy(), energies);
+        int iEnd = Helper.findChannelFromEnergy(roi.getEndEnergy(),   energies);
+
+        iStart = Math.max(0, iStart);
+        iEnd = Math.min(n-1, iEnd);
 
         double inv2s2 = 1.0 / (2.0 * sigma * sigma);
 
-        for (int i = i0; i <= i1; i++) {
-            double Ei = energies[i];    // *** Energie in keV, nicht der Kanalindex! ***
+        for (int i = iStart; i <= iEnd; i++) {
+            double Ei = energies[i];
             double sumPeaks = 0.0;
             for (int k = 0; k < nPeaks; k++) {
-                double A  = p[2 + 4*k];
-                double mu = p[3 + 4*k];
-                double T  = p[4 + 4*k];
-                double G  = p[5 + 4*k];
+                double A  = p[2 + 5*k];
+                double mu = p[3 + 5*k];
+                double T  = p[4 + 5*k];
+                double G  = p[5 + 5*k];
+                double S  = p[6 + 5*k];
                 double z  = Ei - mu;
                 double delta = Math.sqrt(2) * sigma;
 
                 double base = Math.exp(- z*z * inv2s2);
                 double tail = 0.5 * T * Math.exp(z / (G * delta)) * Erf.erfc((z / delta) + 1.0 / (2.0 * G));
+                double step = 0.5 * S * Erf.erfc((z / delta));
 
-                sumPeaks += A * (base + tail);
+                sumPeaks += A * (base + tail + step);
             }
-            // Nur die Peak-Summe ablegen; Baseline separat behandeln (s.u.)
-            fitCurve[i] += sumPeaks+B;    // additiv erlaubt Überlappung mehrerer ROIs
+
+            fitCurve[i] += sumPeaks+B; 
             touched[i] = true;
         }
 
-        //for (int i = i0; i <= i1; i++) fitCurve[i] += B;
     }
 
-    // Variante A (empfohlen fürs Plotten):
-    //   Rückgabe eines Spektrums, das NUR die fit-Kurve enthält (zum Overlay).
-    //   Im Plot: Original (spec.counts) + Overlay (fitCurve) zeichnen.
-    //Spectrum fittedCurves = new Spectrum(energies, fitCurve);
-    //return CalculatingAlgos.ADDITION.calculate(spec, fittedCurves);
-
-    // Variante B (synthetisches "gefitttes" Spektrum):
        double[] composed = spec.getCounts().clone();
-       for (int i = 0; i < n; i++) if (touched[i]) composed[i] = fitCurve[i]; // oder composed[i] = Math.max(composed[i], fitCurve[i]);
+       for (int i = 0; i < n; i++) if (touched[i]) composed[i] = fitCurve[i];
+       logger.info("Created peak-fitted Spectrum.");
        return new Spectrum(energies, composed);
 }
 
@@ -91,6 +97,7 @@ public abstract class SpectrumBuilder {
         }
 
         Spectrum customSpectrum = new Spectrum(spectrum.getEnergy_per_channel(), counts);
+        logger.info("Created custom Spectrum.");
         return customSpectrum;
     }
 
@@ -98,6 +105,7 @@ public abstract class SpectrumBuilder {
 
     public static Spectrum createBackgroundSpectrum(Spectrum spec) {
         FittingData fitData = new FittingData(spec);
+        logger.info("Created background Spectrum.");
         return new Spectrum(spec.getEnergy_per_channel(), Fitter.BackgroundFitAlgos.ALS_FAST.fit(fitData));
     }
 
@@ -121,6 +129,7 @@ public abstract class SpectrumBuilder {
         }
 
         double[] newCounts = Fitter.SmoothingFitAlgos.SG.fit(data);
+        logger.info("Created smoothed Spectrum using Savitzky-Golay.");
         return new Spectrum(spec.getEnergy_per_channel(), newCounts);
     }
 
@@ -133,6 +142,7 @@ public abstract class SpectrumBuilder {
         }
         
         double[] new_counts = Fitter.SmoothingFitAlgos.GAUSS.fit(data);
+        logger.info("Created smoothed Spectrum using Gaussian.");
         return new Spectrum(spec.getEnergy_per_channel(), new_counts);
     }
 
@@ -153,7 +163,7 @@ public abstract class SpectrumBuilder {
         //Declare Background variants
         variants[2] = createBackgroundSpectrum(spec);
         //Declare Gauss smoothed spectrum, because : SG => overshooting and : overshooting + ALS background => undershooting
-        Spectrum gauss = createSmoothedSpectrumUsingGauss(spec, 3.0);
+        Spectrum gauss = createSmoothedSpectrumUsingGauss(spec, 0);
         variants[3] = createBackgroundSpectrum(gauss);
 
         return variants;

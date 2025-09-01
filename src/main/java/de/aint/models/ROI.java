@@ -1,24 +1,23 @@
 package de.aint.models;
 
 import de.aint.builders.SpectrumBuilder;
+import de.aint.operations.calculators.Calculator;
+import de.aint.operations.calculators.Calculator.CalculatingAlgos;
+import de.aint.operations.fitters.Fitter;
 
 public class ROI {
 
-    public Peak[] peaks;
-    public double[] fitParams;
+    private final Peak[] peaks;
+    private double[] fitParams;
+    private double areaOverBackground;
 
     private final Spectrum spectrum;
     private double startEnergy;
     private double endEnergy;
-    private Spectrum backgroundSpectrum;
 
     // Getters
     public Spectrum getSpectrum() {
         return spectrum;
-    }
-
-    public Spectrum getBackgroundSpectrum() {
-        return backgroundSpectrum;
     }
     public double getStartEnergy() {
         return startEnergy;
@@ -26,32 +25,34 @@ public class ROI {
     public double getEndEnergy() {
         return endEnergy;
     }
-
-
+    public double[] getFitParams() {
+        return fitParams;
+    }
+    public Peak[] getPeaks() {
+        return peaks;
+    }
+    public double getAreaOverBackground() {
+        return areaOverBackground;
+    }
 
     //Setter
-    public void setStartEnergy(double startEnergy) {
-        this.startEnergy = startEnergy;
+    public void fitGaussCurve() {
+        this.fitParams = Fitter.PeakFitAlgos.GAUSSLM.fit(this);//Fit the peaks in the ROI using the GAUSS-LM algorithm
     }
-    public void setEndEnergy(double endEnergy) {
-        this.endEnergy = endEnergy;
+    public void setAreaOverBackground() {
+        this.areaOverBackground = Calculator.AreaAlgos.GAUSS.calculateArea(this); //Calculate the area over background using the GAUSS params
     }
-    public void setFitParams(double[] fitParams) {
-            this.fitParams = fitParams;
-    }
-
 
     //Constructor for a Region of Interest (ROI) in a Spectrum
     public ROI(Spectrum spec, Peak[] peaks, double startEnergy, double endEnergy) {
         this.spectrum = spec;
-        this.backgroundSpectrum = SpectrumBuilder.createBackgroundSpectrum(SpectrumBuilder.createSmoothedSpectrumUsingGauss(spec, 3.0));
         this.peaks = peaks;
         this.startEnergy = startEnergy;
         this.endEnergy = endEnergy;
 
-        //PeakDetection.detectAndSetPeakSizeUsingGradient(this, 3);
-        //PeakDetection.detectAndSetPeakSizeUsingFWHM(this, 1);
     }
+
+
 
 
 }

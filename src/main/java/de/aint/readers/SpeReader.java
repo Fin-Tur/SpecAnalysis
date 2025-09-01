@@ -9,8 +9,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class SpeReader extends Reader{
 
+    private static final Logger logger = LoggerFactory.getLogger(SpeReader.class);
+    
     @Override
     public Spectrum readSpectrum(String src) throws IOException {
 
@@ -77,6 +82,7 @@ public class SpeReader extends Reader{
             double[] countsArr = counts.stream().mapToDouble(Double::doubleValue).toArray();
             assert calibration != null;
             assert calibration.length == 3;
+            logger.info("Read SPE spectrum from file: {}", src);
             return new Spectrum(countsArr, calibration[0], calibration[1], calibration[2]);
         }
 

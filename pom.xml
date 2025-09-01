@@ -2,77 +2,135 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.example</groupId>
-    <artifactId>SpecAnalysis</artifactId>
-    <version>1.0-SNAPSHOT</version>
+  <modelVersion>4.0.0</modelVersion>
 
-    <repositories>
-        <repository>
-                <id>Peak</id>
-                <name>Peak Maven Repo</name>
-                <url>http://10.14.0.54:8080/repository/Peak/</url>
-                <releases>
-                    <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                    <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>    
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.3.2</version>
+    <relativePath/>
+  </parent>
 
-    <properties>
-        <sonar.projectKey>peak-tools_specanalysis_30d7acda-fb0f-4c89-98b5-b5eb9728a3da</sonar.projectKey>
-        <sonar.projectName>SpecAnalysis</sonar.projectName>
-        <sonar.qualitygate.wait>true</sonar.qualitygate.wait>
+  <groupId>org.example</groupId>
+  <artifactId>SpecAnalysis</artifactId>
+  <version>1.0-SNAPSHOT</version>
 
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
+  <repositories>
+    <repository>
+      <id>Peak</id>
+      <name>Peak Maven Repo</name>
+      <url>http://10.14.0.54:8080/repository/Peak/</url>
+      <releases><enabled>true</enabled></releases>
+      <snapshots><enabled>true</enabled></snapshots>
+    </repository>
+  </repositories>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-math3</artifactId>
-            <version>3.6.1</version>
-        </dependency>
-        <dependency>
-            <groupId>io.javalin</groupId>
-            <artifactId>javalin</artifactId>
-            <version>6.7.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.17.1</version>
-        </dependency>
-        <dependency>
-            <groupId>net.java.dev.jna</groupId>
-            <artifactId>jna</artifactId>
-            <version>5.14.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>2.0.12</version>
-        </dependency>
+  <properties>
+    <sonar.projectKey>peak-tools_specanalysis_30d7acda-fb0f-4c89-98b5-b5eb9728a3da</sonar.projectKey>
+    <sonar.projectName>SpecAnalysis</sonar.projectName>
+    <sonar.qualitygate.wait>true</sonar.qualitygate.wait>
+    <java.version>21</java.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
 
-    </dependencies>
+  <dependencies>
+    <!-- Spring Web, aber OHNE das Boot-Logging -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-logging</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
 
-        <distributionManagement>
-        <repository>
-            <id>Peak</id>
-            <name>Peak Maven Repo</name>
-            <url>http://10.14.0.54:8080/repository/Peak/</url>
-        </repository>
-        <snapshotRepository>
-            <id>Peak</id>
-            <url>http://10.14.0.54:8080/repository/Peak/</url>
-        </snapshotRepository>
-    </distributionManagement>
+    <!-- Deine bestehenden Libs -->
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-math3</artifactId>
+      <version>3.6.1</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>net.java.dev.jna</groupId>
+      <artifactId>jna</artifactId>
+      <version>5.14.0</version>
+    </dependency>
+
+    <!-- Behalte deinen Logger-Stack -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>2.0.12</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.5.6</version>
+    </dependency>
+
+    
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-jpa</artifactId>
+        <exclusions>
+            <!-- behält deinen Logback/SLF4J Stack sauber -->
+            <exclusion>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-logging</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+    <dependency>
+        <groupId>com.h2database</groupId>
+        <artifactId>h2</artifactId>
+        <scope>runtime</scope>
+    </dependency>
 
 
+    <!-- Optional: Tests -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+      <exclusions>
+        <!-- verhindert, dass test-scope Logging wieder reinzieht -->
+        <exclusion>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-logging</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+  </dependencies>
+
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
+  <distributionManagement>
+    <repository>
+      <id>Peak</id>
+      <name>Peak Maven Repo</name>
+      <url>http://10.14.0.54:8080/repository/Peak/</url>
+    </repository>
+    <snapshotRepository>
+      <id>Peak</id>
+      <url>http://10.14.0.54:8080/repository/Peak/</url>
+    </snapshotRepository>
+  </distributionManagement>
 
 </project>

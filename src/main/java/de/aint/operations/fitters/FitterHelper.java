@@ -125,5 +125,7 @@ public abstract class FitterHelper {
         return kernel;
     }
 
+    
+
 
 }
