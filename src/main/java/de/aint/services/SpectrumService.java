@@ -140,7 +140,7 @@ public class SpectrumService {
         if(source.equalsIgnoreCase("smoothed")){
             String key = name+"_als_smoothed_lambda" + FittingData.GenericOpts.lambda + "_p" + FittingData.GenericOpts.p + "_maxIters" + FittingData.GenericOpts.maxIter;
             return spectrumCache.computeIfAbsent(key,
-                    k -> SpectrumBuilder.createBackgroundSpectrum(s));
+                    k -> SpectrumBuilder.createBackgroundSpectrum(SpectrumBuilder.createSmoothedSpectrumUsingGauss(s, 0)));
         }else{
             String key = name+"_als_default_lambda" + FittingData.GenericOpts.lambda + "_p" + FittingData.GenericOpts.p + "_maxIters" + FittingData.GenericOpts.maxIter;
             return spectrumCache.computeIfAbsent(key,

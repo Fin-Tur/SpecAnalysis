@@ -37,7 +37,7 @@ public class ApiController {
     }
 
 
-    //Get "/smoothed" (jetzt mit Spektrum-ID)
+    //Get "/smoothed"
     @GetMapping("smoothed")
     public ResponseEntity<Spectrum> getSmoothed(
             @RequestHeader("X-Spectrum-Id") Long spectrumId,

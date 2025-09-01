@@ -103,7 +103,6 @@ function setActiveSpectrum(idx) {
   if (page === "peaks") loadAndRenderPeaks();
 }
 
-//TODO
 function removeSpectrum(idx) {
   const current = window.spectra[idx];
   if (idx === window.activeSpectrumIdx) {
@@ -128,7 +127,6 @@ function removeSpectrum(idx) {
   plotSelectedSpectra();
 }
 
-//TODO
 function renameSpectrum(idx) {
   const current = window.spectra[idx];
   console.log("Renaming spectrum with ID:", current.id);
@@ -226,13 +224,9 @@ async function fetchSpectrum(endpoint, iterations, windowSize, sigma, background
     return Promise.resolve(null);
   }
 
-  if (endpoint === "/") {
-    // original -> we already have it in memory
-    return Promise.resolve(active.data);
-  }
-
   let url = API_BASE + endpoint;
   const params = [];
+ 
 
   // Smoothed algorithm & params
   if (endpoint === "/smoothed") {
@@ -413,7 +407,7 @@ function renderPeaks(peaksPayload) {
   const foundIsotopes = new Set();
   let roisHtml = "";
 
-  (peaksPayload.rois || []).forEach((roi, idx) => {
+  (peaksPayload || []).forEach((roi, idx) => {
     let roiHtml = `<div class="roi-card">
       <div><b>ROI #${idx + 1}</b> — <span style="color:#457b9d;">Energy Range:</span> ${roi.energyRange?.join(" - ") ?? "-"}</div>
       <div><span style="color:#457b9d;">Net Area:</span> ${roi.netArea ?? "-"}
